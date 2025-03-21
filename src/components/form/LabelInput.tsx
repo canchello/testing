@@ -11,13 +11,14 @@ interface InputProps {
   variant?: 'primary' | 'secondary'
   isDisabled?: boolean
   label?: string
-  value?: string
+  value?: string | number
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   error?: string
   type?: string
   required?: boolean
   showLabel?: boolean
   countryCode?: string
+  wrapperClass?: string
   onCountryCodeChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void
 }
 
@@ -33,6 +34,7 @@ const TextInput: React.FC<InputProps> = ({
   required = false,
   showLabel = true,
   countryCode = '+91',
+  wrapperClass = '',
   onCountryCodeChange
 }) => {
   const [isPasswordVisible, setPasswordVisible] = useState(false)
@@ -44,7 +46,7 @@ const TextInput: React.FC<InputProps> = ({
   const inputType = type === 'password' && isPasswordVisible ? 'text' : type
 
   return (
-    <div className='flex flex-col gap-2 text-left'>
+    <div className={cn('flex flex-col gap-2 text-left', wrapperClass)}>
       {showLabel && label && (
         <label className='text-base font-bold'>
           {label}

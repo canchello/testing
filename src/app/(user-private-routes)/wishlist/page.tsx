@@ -51,8 +51,8 @@ export default function Wishlist() {
     }
 
     try {
-      const response: any = await Axios({ ...wishlistListingURL, data: payload })
-      setUserWishList(response.data.data.data)
+      const { data }: any = await Axios({ ...wishlistListingURL, data: payload })
+      setUserWishList(data?.data?.data)
     } catch (error) {
       console.error('Error fetching wishlist:', error)
     } finally {

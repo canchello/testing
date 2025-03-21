@@ -75,7 +75,7 @@ const Footer = () => {
             </div>
           </div>
           <div className='flex justify-between flex-col items-center md:flex-row gap-6 md:gap-0 border-b border-[#B9B9B9] py-4'>
-            <div className='flex space-x-2'>
+            <div className='flex gap-2'>
               <div>
                 <Image className='cursor-pointer' src={instaLogo} alt='insta icon' />
               </div>
@@ -86,13 +86,13 @@ const Footer = () => {
                 <Image className='cursor-pointer' src={youtubeLogo} alt='youtube icon' />
               </div>
             </div>
-            <div className='flex items-center flex-col md:flex-row space-y-3 md:space-y-0 space-x-4'>
-              <div className='flex space-x-4 text-primary text-base'>
+            <div className='flex items-center flex-col md:flex-row space-y-3 md:space-y-0 gap-4'>
+              <div className='flex gap-4 text-primary text-base'>
                 <Image src={mailIcon} alt='mailicon' />
                 <div>info@libyabooking.com</div>
               </div>
               <div className='hidden md:block text-[#B9B9B9]'>|</div>
-              <div className='flex space-x-4 text-primary text-base'>
+              <div className='flex gap-4 text-primary text-base'>
                 <Image src={phoneIcon} alt='mailicon' />
                 <div>+91-9003199000</div>
               </div>

@@ -24,7 +24,7 @@ const CustomTextArea: React.FC<CustomTextAreaProps> = ({
   isDisabled = false,
   rows = 4
 }) => (
-  <div className='flex flex-col gap-2 text-left'>
+  <div className='flex flex-col gap-2 text-left space-y-1'>
     {label && (
       <label className='text-base font-bold'>
         {label}

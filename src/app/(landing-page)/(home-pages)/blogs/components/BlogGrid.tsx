@@ -23,8 +23,8 @@ const BlogGrid = () => {
   const [blogsList, setBlogsList] = useState<BlogList[]>([])
 
   const fetchBlogList = async () => {
-    setIsLoading(true)
     try {
+      setIsLoading(true)
       const { data }: any = await Axios({
         ...fetchBlogListURL,
         data: {
@@ -32,21 +32,24 @@ const BlogGrid = () => {
           options: {
             sort: { createdAt: 1 },
             populate: ['attachment'],
+            pagination: true,
+            page: currentPage,
+            limit: blogsPerPage,
             lean: true
           }
         }
       })
-      setBlogsList(data.data.data)
-      setIsLoading(false)
+      setBlogsList(data.data?.data || [])
     } catch (error) {
       console.log(error)
+    } finally {
       setIsLoading(false)
     }
   }
 
   useEffect(() => {
     fetchBlogList()
-  }, [])
+  }, [currentPage])
 
   // Pagination logic
   const indexOfLastBlog = currentPage * blogsPerPage

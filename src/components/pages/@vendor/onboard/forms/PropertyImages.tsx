@@ -1,83 +1,44 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
 import CustomButton from '@/components/common/CustomButton'
 import userStore from '@/stores/userStore'
-import Axios from '@/libs/axios'
-import { updateUserProfileURL } from '@/services/APIs/userDetails'
-import { toast } from 'sonner'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faTrash } from '@fortawesome/free-solid-svg-icons'
 import FileUpload from '@/components/form/FileUpload'
-
-interface FormData {
-  propertyName: string
-  email: string
-  helpdeskNumber: string
-  address: string
-  city: string
-  registerationDocument: object
-}
+import Loader from '@/components/common/Loader'
+import { toast } from 'sonner'
+import Axios from '@/libs/axios'
+import { attachmentCreateURL } from '@/services/APIs/vendor'
+import { getImage } from '@/utils/helper'
 
 const PropertyImages = ({ onNext = () => {}, onPrev = () => {} }) => {
-  const { user = {}, setUser, property = {} }: any = userStore()
+  const { user = {}, updateUserProfile, setUser, property = {} }: any = userStore()
   const [loading, setLoading] = useState<Boolean>(false)
+  const [files, setFiles] = useState<Array<any>>(user?.primaryProperty?.attachment || [])
   const [formLoading, setFormLoading] = useState<Boolean>(false)
+  const [previewImages, setPreviewImages] = useState<Array<any>>(user?.primaryProperty?.attachment || [])
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isDirty, dirtyFields },
-    reset, // To reset the form with updated values
-    getValues
-  } = useForm<FormData>({
-    defaultValues: {
-      propertyName: property.name || '',
-      email: property.email || '',
-      helpdeskNumber: property.helpdeskNumber || '',
-      address: property.address || '',
-      city: property.city || '',
-      registerationDocument: property.registerationDocument || ''
-    }
-  })
-
-  const updateUserProfile = async (data: any) => {
-    const formData = new FormData()
-    Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, value as string)
-    })
-
+  const onSubmit = async () => {
     try {
-      const { data: res }: any = await Axios({
-        ...updateUserProfileURL,
-        data: formData,
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      toast.success('Profile Successfully Updated!')
-      setUser(res.data)
-      return res.data
-    } catch (error) {
-      console.log('error', error)
-    }
-  }
-
-  const onSubmit = async (data: any) => {
-    setFormLoading(true)
-    const updatedPersonalDetailsFields = {} as any
-    // Extract the values from getValues
-    const formValues = getValues() as any
-    Object.keys(dirtyFields || {}).forEach(field => {
-      updatedPersonalDetailsFields[field] = formValues?.[field] || ''
-    })
-
-    const userDetails = { ...updatedPersonalDetailsFields }
-
-    try {
-      if (Object.keys(updatedPersonalDetailsFields).length > 0) {
-        await updateUserProfile(userDetails)
+      const newImages = files.filter((file: any) => !file?.fileUrl)
+      if (newImages.length < 1 && !user.primaryProperty?.attachment?.length) {
+        return toast.error('Please upload at least one image.')
       }
-      setFormLoading(false)
+      if (!newImages.length) return onNext()
+
+      setFormLoading(true)
+      const formData = new FormData()
+      formData.append(`propertyId`, user.primaryProperty?._id)
+      newImages.forEach((file: any, index) => {
+        formData.append(`attachment[${index}]`, file)
+      })
+      const { data: res }: any = await Axios({
+        ...attachmentCreateURL,
+        headers: { 'Content-Type': 'multipart/form-data' },
+        data: formData
+      })
+      await updateUserProfile()
       onNext()
     } catch (error) {
       console.log('error', error)
@@ -85,9 +46,23 @@ const PropertyImages = ({ onNext = () => {}, onPrev = () => {} }) => {
     }
   }
 
-  // if () {
-  //   return <Loader />
-  // }
+  const handleDeleteImage = (index: number) => {
+    setFiles(files.filter((item, i) => i !== index))
+    setPreviewImages(previewImages.filter((item, i) => i !== index))
+  }
+
+  const handleUpload = (acceptedFiles: any) => {
+    const newAcceptedFiles = acceptedFiles.map((file: any) =>
+      Object.assign(file, { preview: URL.createObjectURL(file) })
+    )
+    setFiles(prev => [...(prev || []), ...newAcceptedFiles])
+    setPreviewImages(prev => [...(prev || []), ...acceptedFiles.map((file: any) => URL.createObjectURL(file))])
+  }
+
+  if (loading) {
+    return <Loader />
+  }
+
   return (
     <div className='container mx-auto'>
       <h2 className='text-2xl font-bold mb-2'>
@@ -95,7 +70,7 @@ const PropertyImages = ({ onNext = () => {}, onPrev = () => {} }) => {
       </h2>
       <p className='mb-6 text-lg'>Show us how your place look like</p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-4'>
+      <form className='flex flex-col gap-4'>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div>
             <div className='bg-custom-orange rounded-lg p-4'>
@@ -108,7 +83,7 @@ const PropertyImages = ({ onNext = () => {}, onPrev = () => {} }) => {
                   <p>Add your images here, and you can upload upto 5 images.</p>
                 </div>
                 <div className='bg-white rounded-lg'>
-                  <FileUpload />
+                  <FileUpload setFiles={handleUpload} shouldPreview={false} />
                 </div>
                 <p className='text-muted'>Only support .jpg, .png files</p>
               </div>
@@ -125,10 +100,25 @@ const PropertyImages = ({ onNext = () => {}, onPrev = () => {} }) => {
           </div>
           <div>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              {[...Array(6)].map((item, index) => {
+              {!previewImages.length && (
+                <div className='flex justify-center col-span-full'>
+                  <p>Please upload at least one image to preview</p>
+                </div>
+              )}
+              {previewImages.map((item: any, index) => {
                 return (
-                  <div key={index} className='relative bg-base-200 rounded-lg p-4 h-40'>
-                    <FontAwesomeIcon icon={faTrash} className='absolute text-muted right-4' />
+                  <div key={index} className='relative bg-base-200 rounded-lg p-3 h-40'>
+                    <img
+                      src={((item?.fileUrl && getImage(item.fileUrl)) || item || '') as string}
+                      className='w-full h-full object-cover rounded-md'
+                      alt=''
+                    />
+                    {/* delete preview image */}
+                    <FontAwesomeIcon
+                      icon={faTrash}
+                      className='absolute text-muted bg-base-200 right-0 top-0 rounded-full cursor-pointer p-3'
+                      onClick={() => handleDeleteImage(index)}
+                    />
                   </div>
                 )
               })}
@@ -148,7 +138,7 @@ const PropertyImages = ({ onNext = () => {}, onPrev = () => {} }) => {
           />
           <CustomButton
             // isDisabled={!isDirty && !photoUpdated} // Enable if form is dirty or photo updated
-            type='submit'
+            onClick={onSubmit}
             isLoading={Boolean(loading || formLoading)}
             title='Continue'
             variant='primary'

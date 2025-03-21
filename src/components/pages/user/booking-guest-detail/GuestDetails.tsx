@@ -13,31 +13,7 @@ import CustomButton from '@/components/common/CustomButton'
 import { updateUserBookingURL } from '@/services/APIs/booking'
 import { useParams, useRouter } from 'next/navigation'
 import dayjs from 'dayjs'
-
-interface FormData {
-  specialRequest: string
-  travellingForWork: boolean
-  termsAndCondition: boolean
-  is_subscribed: boolean
-  user: {
-    firstName: string
-    lastName: string
-    email: string
-    contact: string
-    dob: string
-    nationality: string
-    gender: string
-    address: string
-  }
-  passportDetails: {
-    issuingCountry: string
-    passportNumber: string
-    expiryDate: string
-    agreedPolicy: boolean
-    firstName: string
-    lastName: string
-  }
-}
+import { toast } from 'sonner'
 
 interface PassportDetailsProps {
   issuingCountry: string
@@ -68,11 +44,11 @@ export default function GuestDetails({ bookingDetails }: any) {
       travellingForWork: false,
       termsAndCondition: false,
       is_subscribed: false,
-      user: {
+      guestUser: {
         firstName: '',
         lastName: '',
         email: '',
-        contact: '',
+        phoneNumber: '',
         dob: '',
         nationality: '',
         gender: '',
@@ -107,11 +83,11 @@ export default function GuestDetails({ bookingDetails }: any) {
         travellingForWork: false,
         termsAndCondition: false,
         is_subscribed: false,
-        user: {
+        guestUser: {
           firstName: '',
           lastName: '',
           email: '',
-          contact: '',
+          phoneNumber: '',
           dob: '',
           nationality: '',
           gender: '',
@@ -136,14 +112,14 @@ export default function GuestDetails({ bookingDetails }: any) {
         ...bookingDetails,
         travellingForWork: bookingDetails?.travellingForWork || false,
         specialRequest: bookingDetails?.specialRequest || '',
-        user: {
-          ...prevValues.user,
-          ...bookingDetails.user,
-          dob: bookingDetails.user?.dob?.split('T')[0] || ''
+        guestUser: {
+          ...prevValues.guestUser,
+          ...bookingDetails.guestUser,
+          dob: bookingDetails.guestUser?.dob?.split('T')[0] || ''
         },
         passportDetails: {
           ...prevValues.passport,
-          ...bookingDetails.passportDetails,
+          ...bookingDetails.passport,
           expiryDate:
             (bookingDetails.passport?.expiryDate &&
               dayjs(new Date(bookingDetails.passport?.expiryDate)).format('YYYY-MM-DD')) ||
@@ -157,12 +133,12 @@ export default function GuestDetails({ bookingDetails }: any) {
     if (autoFill && user && passportDetails) {
       reset(prevValues => ({
         ...prevValues,
-        user: {
-          ...prevValues.user,
+        guestUser: {
+          ...prevValues.guestUser,
           firstName: user.firstName || '',
           lastName: user.lastName || '',
           email: user.email || '',
-          contact: user.contact || '',
+          phoneNumber: user.phoneNumber || '',
           dob: user.dob?.split('T')[0] || '',
           nationality: user.nationality || '',
           gender: user.gender || '',
@@ -183,16 +159,17 @@ export default function GuestDetails({ bookingDetails }: any) {
   }, [autoFill, user, passportDetails, reset])
 
   const updateUserBookingDetails = async () => {
-    setIsLoading(true)
     const formData = getValues()
     try {
-      const response: any = await Axios({ ...updateUserBookingURL(params.id), data: formData })
-      if (response.data) {
+      if (!formData.termsAndCondition) return toast.warning('Please accept terms and conditions')
+      setIsLoading(true)
+      const { data }: any = await Axios({ ...updateUserBookingURL(params.id), data: formData })
+      if (data) {
         router.push(`/booking/${params.id}/payment`)
       }
-      setIsLoading(false)
     } catch (error) {
       console.log('error', error)
+    } finally {
       setIsLoading(false)
     }
   }
@@ -225,26 +202,28 @@ export default function GuestDetails({ bookingDetails }: any) {
             />
           )}
         />
-        <UserForm control={control} errors={errors} />
+        <UserForm control={control} errors={errors} fieldPrefix='guestUser' />
         <PassportForm control={control} errors={errors} fieldPrefix='passport' />
       </div>
-      <Controller
-        name={'is_subscribed'}
-        control={control}
-        render={({ field }) => (
-          <CustomCheckbox
-            {...field}
-            checked={field.value}
-            className='my-3'
-            label={
-              <p className='text-base font-normal'>
-                Yes, I’d like to receive promotions and special offers via email. Stay updated with the latest deals,
-                promotions, and exclusive offers. You can unsubscribe at any time.
-              </p>
-            }
-          />
-        )}
-      />
+      {!user.subscription?.is_subscribed && (
+        <Controller
+          name={'is_subscribed'}
+          control={control}
+          render={({ field }) => (
+            <CustomCheckbox
+              {...field}
+              checked={field.value}
+              className='my-3'
+              label={
+                <p className='text-base font-normal'>
+                  Yes, I’d like to receive promotions and special offers via email. Stay updated with the latest deals,
+                  promotions, and exclusive offers. You can unsubscribe at any time.
+                </p>
+              }
+            />
+          )}
+        />
+      )}
       <Controller
         name={'termsAndCondition'}
         control={control}

@@ -67,15 +67,27 @@ export default function HotelConfirmation({ bookingDetails }: any) {
           <h3 className='text-lg font-semibold'>Price Breakdown</h3>
           <div className='flex justify-between text-gray-800'>
             <p>Your Booking</p>
-            <p>${bookingDetails?.totalPrice}</p>
+            <span>{bookingDetails.originalPrice ? `$${bookingDetails.originalPrice.toFixed(2)}` : '-'}</span>
           </div>
+          {bookingDetails.discountAmount && (
+            <div className='flex justify-between text-success'>
+              <p>Discount</p>
+              <p className=''>
+                {bookingDetails.discountAmount ? `- $${bookingDetails.discountAmount.toFixed(2)}` : '-'}
+              </p>
+            </div>
+          )}
           <div className='flex justify-between text-gray-800'>
             <p>Platform Fee</p>
-            <p className='text-red-500'>$0.00</p>
+            <p className=''>{bookingDetails.platformCharge ? `$${bookingDetails.platformCharge.toFixed(2)}` : '-'}</p>
           </div>
           <div className='flex justify-between border-t pt-2 text-gray-800 font-bold'>
             <p>Total Amount</p>
-            <p>${bookingDetails?.totalPrice}</p>
+            <p className=''>
+              {bookingDetails.totalPrice
+                ? `$${(bookingDetails.totalPrice + bookingDetails.platformCharge).toFixed(2)}`
+                : '-'}
+            </p>
           </div>
         </div>
 

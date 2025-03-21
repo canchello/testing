@@ -1,0 +1,133 @@
+'use client'
+import React, { useState } from 'react'
+import Link from 'next/link'
+
+import { Controller, useForm } from 'react-hook-form'
+
+import TextField from '@/components/form/TextField'
+import CustomButton from '@/components/common/CustomButton'
+import Axios from '@/libs/axios'
+import { forgotPasswordURL } from '@/services/APIs/user'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
+
+interface FormData {
+  status?: number
+  email: string
+}
+
+const ForgotPasswordForm = () => {
+  const router = useRouter()
+  const [isMailSent, setMailSent] = useState<any>(false)
+  const [isLoading, setLoading] = useState(false)
+  const {
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<FormData>()
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      setLoading(true)
+      const { data: res }: any = await Axios({ ...forgotPasswordURL, data })
+      toast.success(res.message)
+      setMailSent(data)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (isMailSent)
+    return (
+      <div className='md:w-1/2 md:p-4 h-full md:max-h-screen overflow-auto z-20'>
+        <div className='lg:p-8 h-full flex flex-col justify-center items-center gap-4 text-black text-center bg-white rounded-lg'>
+          <div className='text-2xl md:text-4xl font-bold font-carmine'>
+            <p className='mb-2 text-center text-wrap'>Check Your Email!</p>
+          </div>
+          <h2 className='text-lg mb-2 text-center text-wrap'>
+            A reset password link has been sent to your registered email address,
+          </h2>
+
+          <div className='flex flex-col gap-4 w-full'>
+            {/* Submit Button */}
+            <CustomButton
+              variant='secondary'
+              title='Resend Email'
+              isLoading={isLoading}
+              type='submit'
+              className='w-full'
+              onClick={() => onSubmit(isMailSent)}
+            />
+          </div>
+
+          {/* Login Link */}
+          <p className='text-base mt-2 text-center text-black'>
+            Go back to{' '}
+            <Link href='/admin/login' className='font-bold text-primary'>
+              Login
+            </Link>
+          </p>
+        </div>
+      </div>
+    )
+  return (
+    <div className='md:w-1/2 h-full md:p-4 md:max-h-screen overflow-auto z-20'>
+      <div className='lg:p-8 h-full flex flex-col justify-center items-center gap-4 text-black text-center bg-white rounded-lg'>
+        <div className='text-2xl md:text-4xl font-bold font-carmine'>
+          <p className='mb-2 text-center text-wrap'>Reset Password!</p>
+        </div>
+        <h2 className='text-lg mb-2 text-center text-wrap'>
+          Enter your registered email address to get a link for resetting the password.
+        </h2>
+        {/* <Modal
+              title="Password Changed Successfully!"
+              message="Your password has been updated. Please log in with your new password to continue."
+              isOpen={isModalOpen}
+              onClose={() => setModalOpen(false)}
+            /> */}
+
+        <form onSubmit={handleSubmit(onSubmit)} className='w-full'>
+          <div className='flex flex-col gap-4 w-full'>
+            {/* Company Name */}
+            <Controller
+              name='email'
+              control={control}
+              defaultValue=''
+              rules={{
+                required: 'Email is required',
+                pattern: {
+                  value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                  message: 'Invalid email address'
+                }
+              }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  type='email'
+                  placeholder='Email Address'
+                  className='border-2 border-gray-400'
+                  error={errors.email?.message}
+                />
+              )}
+            />
+
+            {/* Submit Button */}
+            <CustomButton variant='secondary' isLoading={isLoading} title='Continue' type='submit' className='w-full' />
+          </div>
+        </form>
+
+        {/* Login Link */}
+        <p className='text-base mt-2 text-center text-black'>
+          Go back to{' '}
+          <Link href='/admin/login' className='font-bold text-primary'>
+            Login
+          </Link>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default ForgotPasswordForm

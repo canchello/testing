@@ -1,6 +1,12 @@
 import React from 'react'
+import '@/utils/i18n' // Import i18n configuration
+import { useTranslation } from 'react-i18next'
 
 export default function LanguageSelector() {
+  const { t, i18n } = useTranslation()
+
+  const onChangeLang = (lng: string) => i18n.changeLanguage(lng)
+
   return (
     <div
       tabIndex={0}
@@ -10,19 +16,24 @@ export default function LanguageSelector() {
         <h3 className='px-4 text-gray-700 font-semibold'>Select Language</h3>
 
         <div className='mt-2 space-y-1'>
-          <label className='flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100'>
-            <input type='radio' name='language' className='radio radio-orange-500 mr-2' onChange={() => {}} />
-            <span className='text-gray-700'>Arabic</span>
-          </label>
-          <label className='flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100'>
+          <label className='flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-100'>
             <input
               type='radio'
               name='language'
-              className='radio radio-orange-500 mr-2'
-              defaultChecked
-              onChange={() => {}}
+              className='radio radio-orange-500'
+              onChange={() => onChangeLang('ar')}
             />
-            <span className='text-gray-700'>English</span>
+            <span className='text-gray-700'>{t('arabic')}</span>
+          </label>
+          <label className='flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-100'>
+            <input
+              type='radio'
+              name='language'
+              className='radio radio-orange-500'
+              defaultChecked
+              onChange={() => onChangeLang('en')}
+            />
+            <span className='text-gray-700'>{t('english')}</span>
           </label>
         </div>
       </div>

@@ -16,7 +16,7 @@ interface FormData {
   email: string
 }
 
-const ForgotPasswordForm = ({ onSentEmail = () => {} }) => {
+const ForgotPasswordForm = ({ onSentEmail = (email: any) => {} }) => {
   const router = useRouter()
   const [isLoading, setLoading] = useState(false)
   const {
@@ -31,7 +31,7 @@ const ForgotPasswordForm = ({ onSentEmail = () => {} }) => {
       const { data: res }: any = await Axios({ ...forgotPasswordURL, data })
       // toast.success("")
       // router.push(`/verify-email${res.data}`)
-      onSentEmail()
+      onSentEmail(data.email)
     } catch (error) {
       console.error(error)
       setLoading(false)

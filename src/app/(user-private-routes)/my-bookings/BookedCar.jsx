@@ -70,7 +70,7 @@ export default function BookedCar({ booking, carButtonClick }) {
             <div className='grid grid-cols-2'>
               <div>
                 <p className='text-base font-bold'>Pick-Up Date</p>
-                <p className='font-medium'>{booking.pickupDateTime ? dayjs(new Date(booking.pickupDateTime)).format("MM-DD-YYYY hh:mm A") : '-'}</p>
+                <p className='font-medium'>{booking.pickupDateTime ? dayjs(booking.pickupDateTime).format("MM-DD-YYYY hh:mm A") : '-'}</p>
               </div>
               <div>
                 <p className='text-base font-bold'>Passengers</p>
@@ -84,17 +84,18 @@ export default function BookedCar({ booking, carButtonClick }) {
             <p className='font-bold text-lg'>
               Price: <span className=''>${(booking.totalPrice || '0')}</span>
             </p>
-            <CustomButton
-              title={isPendingPayment ? 'Make Payment' : (isForReview ? 'Write a Review' : 'Manage Booking')}
-              onClick={() =>
-                carButtonClick({
-                  bookingId: booking._id,
-                  status: booking.status
-                })
-              }
-              variant={isPendingPayment ? "error" : (isForReview ? "secondary" : "primary")}
-              className={`mt-4 w-full `}
-            />
+            {!isPendingPayment &&
+              <CustomButton
+                title={isPendingPayment ? 'Make Payment' : (isForReview ? 'Write a Review' : 'Manage Booking')}
+                onClick={() =>
+                  carButtonClick({
+                    bookingId: booking._id,
+                    status: booking.status
+                  })
+                }
+                variant={isPendingPayment ? "error" : (isForReview ? "secondary" : "primary")}
+                className={`mt-4 w-full `}
+              />}
           </div>
         </div>
       </div>

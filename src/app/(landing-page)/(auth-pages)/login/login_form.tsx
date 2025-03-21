@@ -12,6 +12,10 @@ import { loginURL } from '@/services/APIs/user'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Cookies from 'js-cookie'
+import { getSubdomain, routeToUserDomain } from '@/utils/helper'
+import { USER_ROLES } from '@/libs/constants'
+import { useSearchParam } from 'react-use'
+import { useTranslation } from 'react-i18next'
 
 interface FormData {
   email: string
@@ -20,8 +24,12 @@ interface FormData {
 }
 
 const LoginForm = () => {
+  const { t } = useTranslation()
+
   const router = useRouter()
   const searchParams = useSearchParams()
+  const referralCode = useSearchParam('code')
+
   const token = searchParams.get('token') || ''
   const { setUser, fetchUserProfile }: any = userStore()
   const [isLoading, setLoading] = useState(false)
@@ -36,15 +44,26 @@ const LoginForm = () => {
     try {
       setLoading(true)
       const { data: res }: any = await Axios({ ...loginURL, data })
+      const subdomain = getSubdomain()
+      if (
+        res.status === 1 &&
+        ((res.data?.role === USER_ROLES.USER && subdomain) ||
+          (res.data?.role === USER_ROLES.VENDOR && subdomain !== 'vendor') ||
+          (res.data?.role === USER_ROLES.ADMIN && subdomain !== 'admin'))
+      ) {
+        return toast.error(
+          `You're registered as ${res.data?.role}, Please make sure to login thorugh ${res.data?.role} portal`
+        )
+      }
       if (res.status === 1) {
         setUser(res.data)
         toast.success(`Welcome! ${res.data.firstName || res.data.email}` || `Welcome! You've logged In.`)
         Cookies.set('token', res.data.token, {})
-        router.push('/')
+        const routed = routeToUserDomain()
+        !routed && router.push('/')
       } else if (res.status === 2) {
-        setUser({ email: data.email })
         toast.success(res.message)
-        router.push('/verify-email')
+        router.push(`/verify-email?id=${res.data?._id || ''}`)
       }
     } catch (error) {
       console.error(error)
@@ -59,10 +78,16 @@ const LoginForm = () => {
         router.push('/')
       })
     }
+    setTimeout(() => {
+      const error = searchParams.get('error') || ''
+      if (error) {
+        toast.error(error.replace(/_/g, ' '))
+      }
+    }, 500)
   }, [token])
 
   const onGoogleClick = async () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_ENDPOINT}/authentication/google`
+    window.location.href = `${process.env.NEXT_PUBLIC_ENDPOINT}/authentication/google?referralBy=${referralCode}`
   }
 
   return (
@@ -71,6 +96,7 @@ const LoginForm = () => {
         <div className='lg:p-8 flex flex-col justify-center items-center gap-2 lg:gap-4 text-black text-center'>
           <div className='text-2xl md:text-4xl font-bold font-carmine'>
             <p className='mb-2 text-center text-wrap'>Welcome Back!</p>
+            <h1>{t('welcome')}</h1>
           </div>
           <h2 className='text-lg mb-2 text-center text-wrap'>
             Sign in for quick access to your bookings and personalized hotel offers.

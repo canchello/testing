@@ -1,12 +1,13 @@
 'use client'
 import React from 'react'
-import Image from 'next/image'
-import { usePathname } from 'next/navigation'
-import ProfileImage from '@/assets/images/IdelImage.png'
+import { redirect, usePathname, useRouter } from 'next/navigation'
 import CustomButton from '@/components/common/CustomButton'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faEllipsisH, faMessage, faUser } from '@fortawesome/free-solid-svg-icons'
 import userStore from '@/stores/userStore'
+import { ROUTES } from '@/libs/constants'
+import Link from 'next/link'
+import { NotificationDropDown } from '../Header'
 
 // Map routes to readable names
 const routeToTitleMap: { [key: string]: string } = {
@@ -36,27 +37,32 @@ const UserHeader = () => {
       {/* Right Section - Icons and Profile */}
       <div className='flex items-center bg-white rounded-md px-4 py-2 space-x-4'>
         {/* Notifications Icon */}
-        <div className='flex items-center gap-3' tabIndex={0}>
+        {/* <div className='flex items-center gap-3' tabIndex={0}>
           <CustomButton
             className='btn-circle border-none !p-0 min-h-4 h-10 w-10'
             title={<FontAwesomeIcon icon={faBell} />}
           />
-        </div>
+        </div> */}
+        <NotificationDropDown btnClass='btn-circle border-none !p-0 min-h-4 h-10 w-10' />
 
         {/* Messages Icon */}
         <div className='flex items-center gap-3' tabIndex={0}>
-          <CustomButton
-            className='btn-circle border-none !p-0 min-h-4 h-10 w-10'
-            title={<FontAwesomeIcon icon={faMessage} />}
-          />
+          <Link href={ROUTES.VENDOR.MESSAGES}>
+            <CustomButton
+              className='btn-circle border-none !p-0 min-h-4 h-10 w-10'
+              title={<FontAwesomeIcon icon={faMessage} />}
+            />
+          </Link>
         </div>
 
         {/* Profile Section */}
         <div className='flex items-center space-x-2'>
-          <CustomButton
-            className='btn-circle border-none !p-0 min-h-4 h-10 w-10'
-            title={<FontAwesomeIcon icon={faUser} />}
-          />
+          <Link href={ROUTES.VENDOR.ONBOARD}>
+            <CustomButton
+              className='btn-circle border-none !p-0 min-h-4 h-10 w-10'
+              title={<FontAwesomeIcon icon={faUser} />}
+            />
+          </Link>
           {/* User Name */}
           <span className='text-lg font-normal'>
             {user?.firstName || user?.lastName
@@ -73,11 +79,7 @@ const UserHeader = () => {
           >
             <FontAwesomeIcon icon={faEllipsisH} size='lg' />
           </button>
-          <ul tabIndex={0} className='dropdown-content menu border bg-base-100 rounded-lg z-[1] w-52 mt-1 p-2 shadow'>
-            {[{ title: 'item 1' }, { title: 'item 2' }].map((item, index) => (
-              <li key={index}>{item.title}</li>
-            ))}
-          </ul>
+          <ProfileDropDown />
         </div>
       </div>
     </nav>
@@ -85,3 +87,40 @@ const UserHeader = () => {
 }
 
 export default UserHeader
+
+const ProfileDropDown = ({}) => {
+  const router = useRouter()
+  const { logout, clearAuthState }: any = userStore()
+
+  const onLogout = () => {
+    logout()
+    redirect(ROUTES.VENDOR.LOGIN)
+  }
+
+  return (
+    <ul tabIndex={0} className='dropdown-content menu bg-base-100 text-black rounded-box z-50 mt-4 w-72 p-2 shadow'>
+      {[
+        { title: 'Manage Property', icon: faUser, route: ROUTES.VENDOR.ONBOARD }
+        // { title: 'My Bookings', icon: faHouseFlag, route: ROUTES.MY_BOOKINGS },
+        // { title: 'My Reviews', icon: faStar, route: ROUTES.MY_REVIEWS },
+        // { title: 'Wishlist', icon: faHeart, route: ROUTES.MY_WISHLIST },
+        // { title: 'Wallet', icon: faWallet, route: ROUTES.WALLET_REWARDS },
+        // { title: 'Customer Support', icon: faHeadset, route: ROUTES.CUSTOMER_SUPPORT }
+      ].map((item, index) => {
+        return (
+          <Link href={item.route}>
+            <li key={index + item.title} className='flex flex-row items-center rounded-lg'>
+              <div className='w-full'>
+                <FontAwesomeIcon icon={item.icon} className='hover:bg-transparent' />
+                <span className='font-semibold hover:bg-transparent focus:bg-transparent p-0'>{item.title}</span>
+              </div>
+            </li>
+          </Link>
+        )
+      })}
+      <li className='mt-2'>
+        <CustomButton title='Logout' variant='error' onClick={() => onLogout()} />
+      </li>
+    </ul>
+  )
+}

@@ -11,12 +11,15 @@ import ProfilePhotoModal from '@/components/common/ProfilePhotoModal'
 import Modal from '@/components/UI/Modal'
 import Axios from '@/libs/axios'
 import { updateUserProfileURL } from '@/services/APIs/userDetails'
-import Loader from '@/components/common/Loader'
 import { getImage } from '@/utils/helper'
 import { LOGGED_USER_PROVIDER_TYPE } from '@/libs/constants'
 import { toast } from 'sonner'
 import PhoneInput from '@/components/form/PhoneInput'
 import OTPInput from '@/components/form/OtpInput'
+import { useMount } from 'react-use'
+import { designationListURL, sendOTPURL, verifyOTPURL } from '@/services/APIs/vendor'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faUser } from '@fortawesome/free-solid-svg-icons'
 
 interface FormData {
   personalDetails: {
@@ -25,18 +28,20 @@ interface FormData {
     email: string
     phoneNumber: string
     gender: string
-    designation: string
+    designationId: string
   }
 }
 
 const PersonalDetails = ({ onNext = () => {} }) => {
-  const { user = {}, setUser }: any = userStore()
+  const { user = {}, setUser, updateUserProfile: updateProfile }: any = userStore()
   const [loading, setLoading] = useState<Boolean>(false)
+  const [designations, setDesignations] = useState([])
   const [formLoading, setFormLoading] = useState<Boolean>(false)
-  const [verifyLoading, setVerifyLoading] = useState<Boolean>(false)
   const phoneNumber = useRef()
   const [photoUpdated, setPhotoUpdated] = useState<Boolean>(false)
+  const [verifyLoading, setVerifyLoading] = useState<Boolean>(false)
   const [verifyNumber, setVerifyNumber] = useState<Boolean>(false)
+  const [otp, setOTP] = useState('')
 
   const {
     control,
@@ -53,7 +58,7 @@ const PersonalDetails = ({ onNext = () => {} }) => {
         email: user?.email || '',
         phoneNumber: user?.phoneNumber || '',
         gender: user?.gender || '',
-        designation: user?.designation || ''
+        designationId: user?.designationId || ''
       }
     }
   })
@@ -71,7 +76,8 @@ const PersonalDetails = ({ onNext = () => {} }) => {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       toast.success('Profile Successfully Updated!')
-      setUser(res.data)
+      await updateProfile()
+      // setUser(res.data)
       setPhotoUpdated(false)
       return res.data
     } catch (error) {
@@ -84,15 +90,40 @@ const PersonalDetails = ({ onNext = () => {} }) => {
     setFocus('personalDetails.phoneNumber')
   }
 
-  const onVerifyNumber = () => {
+  const onVerifyNumber = async () => {
     setVerifyLoading(true)
-    // add verify number logic
-    setVerifyLoading(false)
-    onNext()
+    try {
+      const { data }: any = await Axios({
+        ...verifyOTPURL,
+        data: {
+          userId: user._id,
+          type: 'phoneNumber',
+          otp: otp
+        }
+      })
+      toast.success(data.message)
+      onNext()
+    } catch (error) {
+      console.log('error', error)
+    } finally {
+      setVerifyLoading(false)
+    }
   }
 
-  const sendNumberOTP = () => {
-    setVerifyNumber(true)
+  const sendNumberOTP = async () => {
+    try {
+      const { data }: any = await Axios({
+        ...sendOTPURL,
+        data: {
+          userId: user._id,
+          type: 'phoneNumber'
+        }
+      })
+      toast.success(data.message)
+      setVerifyNumber(true)
+    } catch (error) {
+      console.log('error', error)
+    }
   }
 
   const onSubmit = async (data: any) => {
@@ -112,13 +143,28 @@ const PersonalDetails = ({ onNext = () => {} }) => {
         await updateUserProfile(userDetails)
       }
       setFormLoading(false)
-      sendNumberOTP()
-      // onNext()
+      !user.isNumberVerified ? sendNumberOTP() : onNext()
     } catch (error) {
       console.log('error', error)
       setFormLoading(false)
     }
   }
+
+  useMount(async () => {
+    try {
+      const { data }: any = await Axios({
+        ...designationListURL,
+        data: {
+          options: {
+            find: true
+          }
+        }
+      })
+      setDesignations(data.data || [])
+    } catch (error) {
+      console.log('error', error)
+    }
+  })
 
   // if () {
   //   return <Loader />
@@ -138,11 +184,9 @@ const PersonalDetails = ({ onNext = () => {} }) => {
           <div className='flex items-center space-x-4'>
             <div className='w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden'>
               {user?.profilePicture ? (
-                <img src={getImage(user.profilePicture)} alt='User' className='w-full h-full object-cover' />
-              ) : user?.profilePicture ? (
                 <img
                   src={
-                    user.authProviders[0] === LOGGED_USER_PROVIDER_TYPE.google
+                    user.authProviders.length === 1 && user.authProviders.includes(LOGGED_USER_PROVIDER_TYPE.google)
                       ? user.profilePicture
                       : getImage(user.profilePicture)
                   }
@@ -150,18 +194,14 @@ const PersonalDetails = ({ onNext = () => {} }) => {
                   className='w-full h-full object-cover'
                 />
               ) : (
-                <span className='text-gray-500'>
-                  {user?.firstName || user?.lastName
-                    ? (user.firstName || '') + ' ' + (user?.lastName || '')
-                    : (user.email || '').split('@')[0]}
-                </span>
+                <FontAwesomeIcon icon={faUser} />
               )}
             </div>
             <div>
               <p className='text-lg font-medium'>
                 {user?.firstName || user?.lastName
                   ? user.firstName + ' ' + user?.lastName
-                  : (user.email || '').split('@')[0]}
+                  : (user?.email || '').split('@')[0]}
               </p>
               <p className='text-sm text-gray-500'>{user.email}</p>
             </div>
@@ -254,18 +294,15 @@ const PersonalDetails = ({ onNext = () => {} }) => {
             />
           </div>
           <Controller
-            name='personalDetails.designation'
+            name='personalDetails.designationId'
             control={control}
             rules={{ required: 'Designation is required' }}
             render={({ field }) => (
               <CustomSelect
                 {...field}
                 label='Designation'
-                options={[
-                  { label: 'Owner', value: 'owner' },
-                  { label: 'Manager', value: 'manager' }
-                ]}
-                error={errors?.personalDetails?.designation?.message}
+                options={designations.map((d: any) => ({ label: d.name, value: d._id }))}
+                error={errors?.personalDetails?.designationId?.message}
                 required
               />
             )}
@@ -305,10 +342,15 @@ const PersonalDetails = ({ onNext = () => {} }) => {
             {getValues('personalDetails.phoneNumber')}
           </p>
           <div className='flex justify-between flex-wrap items-center gap-2'>
-            <OTPInput onComplete={() => {}} />
+            <OTPInput onComplete={otp => setOTP(otp)} />
             <div className='flex items-center gap-2'>
               <CustomButton title='Change Number' variant='default' onClick={onChangeNumber} />
-              <CustomButton title='Verify Number' onClick={onVerifyNumber} />
+              <CustomButton
+                title='Verify Number'
+                isLoading={!!verifyLoading}
+                isDisabled={!!verifyLoading}
+                onClick={onVerifyNumber}
+              />
             </div>
           </div>
         </div>

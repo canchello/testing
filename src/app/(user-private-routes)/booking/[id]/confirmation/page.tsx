@@ -13,9 +13,10 @@ import HotelDetailCard from '@/components/pages/user/booking-confirmation/HotelD
 import Loader from '@/components/common/Loader'
 
 const BookingConfirmed = () => {
-  const params = useParams();
+  const params = useParams()
   const [isLoading, setLoading] = useState(false)
-  const [bookingDetails,setBookingDetails]=useState(null)
+  const [bookingDetails, setBookingDetails] = useState(null)
+
   const fetchUserBookingDetails = async () => {
     setLoading(true)
     const payload = {
@@ -27,8 +28,8 @@ const BookingConfirmed = () => {
       findOne: true
     }
     try {
-      const {data:res} : any = await Axios({ ...fetchUserBookingListURL, data: payload })
-      setBookingDetails(res?.data?.data.find((booking:any)=> booking._id === params.id))
+      const { data: res }: any = await Axios({ ...fetchUserBookingListURL, data: payload })
+      setBookingDetails(res?.data?.data.find((booking: any) => booking._id === params.id))
       setLoading(false)
     } catch (error) {
       console.log('error', error)
@@ -36,7 +37,6 @@ const BookingConfirmed = () => {
     }
   }
 
-  
   useEffect(() => {
     if (params.id) {
       fetchUserBookingDetails()
@@ -59,17 +59,18 @@ const BookingConfirmed = () => {
           iconPosition='left'
         />
       </Link>
-      {
-        !isLoading && bookingDetails ? 
+      {!isLoading && bookingDetails ? (
         <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-        <div className='col-span-2 space-y-4'>
-          <HotelConfirmation bookingDetails={bookingDetails} />
+          <div className='col-span-2 space-y-4'>
+            <HotelConfirmation bookingDetails={bookingDetails} />
+          </div>
+          <HotelDetailCard bookingDetails={bookingDetails} />
         </div>
-        <HotelDetailCard bookingDetails={bookingDetails} />
-      </div> :<Loader />
-      }
+      ) : (
+        <Loader />
+      )}
       <RecommendCarBooking />
-      </div>
+    </div>
   )
 }
 

@@ -4,12 +4,14 @@ import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons'
 import { toast } from 'sonner'
+import userStore from '@/stores/userStore'
 
 export default function ReferAFriend() {
+  const { user }: any = userStore()
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText('https://libyastays.com/refer?code=FRIEND123')
+    navigator.clipboard.writeText(`https://canchello.com/register?code=${user.referralCode}`)
     setCopied(true)
     toast.success('Refer Link Copied')
     setTimeout(() => setCopied(false), 2000)
@@ -26,7 +28,7 @@ export default function ReferAFriend() {
         <div className='my-4'>
           <div className='flex items-center justify-between bg-white rounded-md'>
             <span className='text-sm text-gray-700 truncate px-3 py-2 break-all w-full'>
-              https://libyastays.com/refer?code=FRIEND123
+              {`https://canchello.com/register?code=${user.referralCode}`}
             </span>
             <button onClick={handleCopy} className='ml-2 btn btn-square bg-custom-dark-blue rounded-l-none'>
               {<FontAwesomeIcon icon={copied ? faCheck : faCopy} className='text-white' />}

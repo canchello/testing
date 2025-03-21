@@ -3,15 +3,34 @@ import Footer from '@/components/layout/vendor/Footer'
 import Header from '@/components/layout/vendor/Header'
 import Sidebar from '@/components/layout/vendor/Sidebar'
 import UserHeader from '@/components/layout/vendor/UserHeader'
+import { ROUTES } from '@/libs/constants'
 import { cn } from '@/libs/tailwind'
 import userStore from '@/stores/userStore'
-import { usePathname } from 'next/navigation'
+import { redirect, usePathname, useRouter } from 'next/navigation'
+import { useEffect, useMemo } from 'react'
 
 const VendorLayout = ({ children }) => {
   const pathname = usePathname()
+  const router = useRouter()
   const { user } = userStore()
 
-  if (user) {
+  const onBoardingNotDone = useMemo(() => {
+    const userComplete = !user.firstName || !user.lastName || !user.email || !user.phoneNumber || !user.gender || !user.designationId
+    const noProperty = !user.primaryProperty
+    const propertyInComplete = (user.primaryProperty) && (!user.primaryProperty?.roomType?.length || !user.primaryProperty?.attachment?.length || !user?.bankDetail)
+    return userComplete || noProperty || propertyInComplete
+  })
+
+  useEffect(() => {
+    if (!user) return;
+    if (onBoardingNotDone)
+      router.push(ROUTES.VENDOR.ONBOARD)
+  }, [user?.primaryProperty, user?.bankDetail])
+
+  if (!user) {
+    redirect(ROUTES.VENDOR.LOGIN)
+  }
+  if (!onBoardingNotDone) {
     // layout for logged in vendor - modify change accordingly
     return (
       <div className='flex h-screen overflow-auto'>

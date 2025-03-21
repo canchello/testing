@@ -7,7 +7,7 @@ interface ButtonProps {
   onClick?: () => void
   title?: string | ReactNode
   className?: string
-  variant?: 'primary' | 'secondary' | 'light' | 'default' | 'outlined' | 'error' | 'success'
+  variant?: 'primary' | 'secondary' | 'light' | 'light_text' | 'default' | 'outlined' | 'error' | 'success'
   isDisabled?: boolean
   isLoading?: boolean
   icon?: any
@@ -41,7 +41,8 @@ const CustomButton: React.FC<ButtonProps> = ({
     outlined: '!bg-white text-primary border !border-primary',
     error: '!bg-[#BD4040] text-white',
     success: '!bg-success text-white',
-    light: 'bg-custom-orange text-black focus:outline-none focus:ring-2 focus:ring-opacity-50'
+    light: '!bg-custom-orange text-black focus:outline-none focus:ring-2 focus:ring-opacity-50',
+    light_text: '!bg-custom-orange text-primary focus:outline-none focus:ring-2 focus:ring-opacity-50'
   }
 
   return (

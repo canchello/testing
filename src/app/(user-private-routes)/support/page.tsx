@@ -1,6 +1,6 @@
 'use client'
 import CustomButton from '@/components/common/CustomButton'
-import { faChevronDown, faChevronLeft, faEnvelope, faPhone, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faCheck, faChevronDown, faChevronLeft, faEnvelope, faPhone, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Image from 'next/image'
 import imageSrc from '@/assets/images/IdelImage.png'
@@ -22,12 +22,19 @@ interface Issue {
   status: string
 }
 
+const sortByOptions = [
+  { label: 'Created', value: 'createdAt' },
+  { label: 'Issue type', value: 'type' },
+  { label: 'Status', value: 'status' }
+]
+
 export default function CustomerSupport() {
   // const [myBookings, setMyBookings] = useState([])
   const router = useRouter()
 
   const [refetchData, setRefetchData] = useState(false)
   const [selectedRows, setSelectedRows] = useState<any[]>([])
+  const [sortBy, setSortBy] = useState(sortByOptions[0].value)
 
   const columns = [
     {
@@ -60,72 +67,6 @@ export default function CustomerSupport() {
       sortable: true
     }
   ]
-
-  // const staticData: Issue[] = [
-  // 	{
-  // 		date: "12-07-2024",
-  // 		type: "Hotel",
-  // 		description: "Can’t cancel the booking for Triopli hotel",
-  // 		comment: "-",
-  // 		status: "Work In Progress",
-  // 	},
-  // 	{
-  // 		date: "01-07-2024",
-  // 		type: "Car",
-  // 		description: "I want to update my Car Booking",
-  // 		comment: "-",
-  // 		status: "Work In Progress",
-  // 	},
-  // 	{
-  // 		date: "28-05-2024",
-  // 		type: "Hotel",
-  // 		description: "Not able to do card payment",
-  // 		comment:
-  // 			"Update your card details in the profile section and you’ll be able to do the card payments",
-  // 		resolutionDate: "12-07-2024",
-  // 		status: "Closed",
-  // 	},
-  // 	{
-  // 		date: "28-05-2024",
-  // 		type: "Hotel",
-  // 		description: "Didn’t receive the confirmation mail for my booking",
-  // 		comment: "A confirmation mail has been sent to the registered E-mail id",
-  // 		resolutionDate: "12-07-2024",
-  // 		status: "Closed",
-  // 	},
-  // 	{
-  // 		date: "28-05-2024",
-  // 		type: "Hotel",
-  // 		description: "Didn’t receive the confirmation mail for my booking",
-  // 		comment: "A confirmation mail has been sent to the registered E-mail id",
-  // 		resolutionDate: "12-07-2024",
-  // 		status: "Closed",
-  // 	},
-  // 	{
-  // 		date: "28-05-2024",
-  // 		type: "Hotel",
-  // 		description: "Didn’t receive the confirmation mail for my booking",
-  // 		comment: "A confirmation mail has been sent to the registered E-mail id",
-  // 		resolutionDate: "12-07-2024",
-  // 		status: "Closed",
-  // 	},
-  // 	{
-  // 		date: "28-05-2024",
-  // 		type: "Hotel",
-  // 		description: "Didn’t receive the confirmation mail for my booking",
-  // 		comment: "A confirmation mail has been sent to the registered E-mail id",
-  // 		resolutionDate: "12-07-2024",
-  // 		status: "Closed",
-  // 	},
-  // 	{
-  // 		date: "28-05-2024",
-  // 		type: "Hotel",
-  // 		description: "Didn’t receive the confirmation mail for my booking",
-  // 		comment: "A confirmation mail has been sent to the registered E-mail id",
-  // 		resolutionDate: "12-07-2024",
-  // 		status: "Closed",
-  // 	},
-  // ];
 
   const handleCreateRaiseTicketClick = () => {
     router.push(ROUTES.CREATE_RAISE_TICKET)
@@ -210,16 +151,46 @@ export default function CustomerSupport() {
           <div className='py-4 flex flex-wrap justify-between items-center w-full'>
             <div>
               <h1 className='text-xl font-semibold text-gray-700'>All Unsolved Issues</h1>
-              <span className='text-gray-500'>5 tickets</span>
+              {/* <span className='text-gray-500'>5 tickets</span> */}
             </div>
             <div className='flex ml-auto items-center gap-4'>
               <CustomButton onClick={() => handleCreateRaiseTicketClick()} title='Raise a New Issue' />
             </div>
           </div>
           <div className='mx-auto flex flex-wrap gap-4 justify-between items-center'>
-            <div className='flex w-[250px] border px-4 py-2 rounded-3xl justify-between items-center'>
-              <p className='m-0 p-0 text-md font-semibold text-[#808080]'>Sort By</p>
-              <FontAwesomeIcon icon={faChevronDown} />
+            <div className='dropdown dropdown-end'>
+              <div className='flex items-center gap-3' tabIndex={0}>
+                <div className='flex w-[250px] border px-4 py-2 rounded-3xl justify-between items-center'>
+                  <p className='m-0 p-0 text-md font-semibold text-[#808080]'>
+                    Sort By: {sortByOptions.find(item => item.value === sortBy)?.label}
+                  </p>
+                  <FontAwesomeIcon icon={faChevronDown} />
+                </div>
+              </div>
+              <ul
+                tabIndex={0}
+                className='dropdown-content menu bg-base-100 text-black rounded-box z-[1] mt-4 w-52 p-2 shadow'
+              >
+                {sortByOptions
+                  // .filter(item => )
+                  .map((item, index) => (
+                    <li
+                      key={index + item.value}
+                      className='flex flex-row items-center rounded-lg'
+                      onClick={() => {
+                        setSortBy(item.value)
+                        setRefetchData(true)
+                      }}
+                    >
+                      <div className='w-full'>
+                        <span className='font-semibold hover:bg-transparent focus:bg-transparent p-0'>
+                          {item.label}
+                        </span>
+                        {item.value === sortBy && <FontAwesomeIcon icon={faCheck} className='ml-auto' />}
+                      </div>
+                    </li>
+                  ))}
+              </ul>
             </div>
             <div className='flex items-center ml-auto'>
               <CustomButton
@@ -245,6 +216,14 @@ export default function CustomerSupport() {
                 rowClickable={true}
                 onRowClick={rowClickHandler}
                 onSelectedRowsChange={handleSelectedRowChange}
+                recordPerPage={10}
+                payloadObj={{
+                  optionFilters: {
+                    sort: { [sortBy]: -1 },
+                    lean: true
+                  },
+                  additionalFilters: {}
+                }}
               />
             </div>
           </main>

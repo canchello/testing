@@ -34,8 +34,8 @@ const AddPropertyToWishListModal = () => {
       }
     }
     try {
-      const response: any = await Axios({ ...wishlistListingURL, data: payload })
-      setUserWishList(response.data.data.data)
+      const { data }: any = await Axios({ ...wishlistListingURL, data: payload })
+      setUserWishList(data?.data?.data || [])
     } catch (error) {
       console.error('Error fetching wishlist:', error)
     }
@@ -43,9 +43,9 @@ const AddPropertyToWishListModal = () => {
 
   const createWishList = async (data: any) => {
     try {
-      const response: any = await Axios({ ...createWishListURL, data })
+      const { data: res }: any = await Axios({ ...createWishListURL, data })
       toast.success('Wishlist created successfully!')
-      return response.data.data
+      return res.data
     } catch (error) {
       console.log('error', error)
     }
@@ -56,10 +56,10 @@ const AddPropertyToWishListModal = () => {
       propertyId: params.id
     }
     try {
-      const response: any = await Axios({ ...addPropertyIntoWishListURL(wishlistId), data: payload })
+      const { data }: any = await Axios({ ...addPropertyIntoWishListURL(wishlistId), data: payload })
       await fetchUserWishList()
       toast.success('Hotel added to your wishlist!')
-      return response.data.data
+      return data.data
     } catch (error) {
       console.log('error', error)
     }

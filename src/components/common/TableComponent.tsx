@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useId, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheckDouble, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronLeft, faChevronRight, faChevronUp } from '@fortawesome/free-solid-svg-icons'
 import Axios from '@/libs/axios'
 import Loader from './Loader'
+import { cn } from '@/libs/tailwind'
 
 interface Column {
   name: string
@@ -15,7 +16,7 @@ interface Column {
 interface TableComponentProps {
   customTableClasses?: string
   customHeaderClasses?: string
-  columns: Column[]
+  columns: Column[] | any
   data?: any[]
   dataURL?: any
   tableTitle?: string
@@ -30,11 +31,14 @@ interface TableComponentProps {
   onSelectedRowsChange?: (selectedRows: any[]) => void
   rowClickable?: boolean // New prop for enabling row clicks
   onRowClick?: (row: any) => void // New prop for handling row clicks
+  recordPerPage?: any
+  className?: string
 }
 
 const TableComponent: React.FC<TableComponentProps> = ({
   customTableClasses = '',
   customHeaderClasses = '',
+  className = '',
   columns = [],
   data = [],
   dataURL = {},
@@ -49,17 +53,16 @@ const TableComponent: React.FC<TableComponentProps> = ({
   selectableRows = false,
   onSelectedRowsChange = () => {},
   rowClickable = false, // Default value
-  onRowClick = () => {} // Default empty function
+  onRowClick = () => {}, // Default empty function
+  recordPerPage = 10
 }) => {
-  const id = useId()
-  const recordPerPage = 3
-
   // State variables
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [paginator, setPaginator] = useState<any>()
   const [renderData, setRenderData] = useState<any[]>([])
-  const [sortConfig, setSortConfig] = useState(payloadObj?.sortConfig || { sort: columns[0]?.dataKey, order: 'ASC' })
+  const [sortConfig, setSortConfig] = useState(payloadObj?.sortConfig)
+  // || { sort: columns[0]?.dataKey, order: 1 }
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(isDataLoading)
@@ -69,6 +72,10 @@ const TableComponent: React.FC<TableComponentProps> = ({
   const extraFilters = useMemo(
     () => (payloadObj?.additionalFilters ? payloadObj?.additionalFilters : {}),
     [payloadObj?.additionalFilters]
+  )
+  const extraOptionFilters = useMemo(
+    () => (payloadObj?.optionFilters ? payloadObj?.optionFilters : {}),
+    [payloadObj?.optionFilters]
   )
 
   const APIpayload = useMemo(
@@ -80,7 +87,10 @@ const TableComponent: React.FC<TableComponentProps> = ({
         limit: recordPerPage,
         page: currentPage,
         pagination: enablePagination,
-        ...sortConfig
+        sort: {
+          [sortConfig?.sort]: sortConfig?.order // Dynamic key for sorting
+        },
+        ...extraOptionFilters
       }
     }),
     [currentPage, extraFilters, searchColumns, searchTerm, sortConfig]
@@ -140,8 +150,9 @@ const TableComponent: React.FC<TableComponentProps> = ({
   )
 
   const handleSort = (dataKey: any) => {
-    const newDirection = sortConfig?.sort === dataKey && sortConfig?.order === 'ASC' ? 'DESC' : 'ASC'
+    const newDirection = sortConfig?.sort === dataKey && sortConfig?.order === 1 ? -1 : 1 // 1 is ASC, -1 is DESC
     setSortConfig({ sort: dataKey, order: newDirection })
+
     if (dataURL) {
       setRefetchData(true)
     }
@@ -177,90 +188,110 @@ const TableComponent: React.FC<TableComponentProps> = ({
   }, [dataURL, searchTerm])
 
   useEffect(() => {
-    if (!dataURL && data.length > 0) {
+    if (!Object.keys(dataURL).length && data.length > 0) {
       setTotalPages(Math.ceil(data.length / recordPerPage))
       setRenderData(data.slice(0, recordPerPage))
     }
   }, [data, dataURL])
 
+  const getPageNumbers = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+
+    if (currentPage <= 3) {
+      return [1, 2, 3, '...', totalPages]
+    }
+
+    if (currentPage >= totalPages - 2) {
+      return [1, '...', totalPages - 2, totalPages - 1, totalPages]
+    }
+
+    return [1, '...', currentPage, currentPage + 1, '...', totalPages]
+  }
+
   return (
-    <div className='bg-white shadow-lg rounded-lg p-4'>
+    <div className={cn('', className)}>
       {loading ? (
         <div className='text-center'>
           <Loader />
         </div>
-      ) : renderData.length > 0 ? (
-        <table className={`w-full text-left border-collapse ${customTableClasses}`}>
-          <thead className='bg-[#F1F1F1] text-sm font-medium'>
-            <tr>
-              {selectableRows && <th className='px-4 py-4'>Select</th>}
-              {columns.map((col, index) => (
-                <th
-                  key={index}
-                  className={`px-4 py-4 text-left ${col.sortable ? 'cursor-pointer' : ''} ${
-                    index === 0
-                      ? 'rounded-tl-xl rounded-bl-xl'
-                      : index === columns.length - 1
-                      ? 'rounded-tr-xl rounded-br-xl'
-                      : ''
-                  }`}
-                  onClick={() => col.sortable && handleSort(col.dataKey)}
-                >
-                  {col.name}
-                  {col.sortable && (
-                    <span className='ml-2'>
-                      {sortConfig?.sort === col.dataKey ? (
-                        sortConfig?.order === 'ASC' ? (
-                          <FontAwesomeIcon icon={faChevronUp} />
-                        ) : (
-                          <FontAwesomeIcon icon={faChevronDown} />
-                        )
-                      ) : null}
-                    </span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {renderData.map((row, index) => (
-              <tr
-                key={index}
-                className={`text-sm ${index % 2 === 0 ? 'bg-gray-50' : ''} ${
-                  rowClickable ? 'cursor-pointer hover:bg-gray-200' : ''
-                }`}
-                onClick={() => rowClickable && onRowClick(row)} // Handle row click
-              >
-                {selectableRows && (
-                  <td className='py-4 px-3'>
-                    <input
-                      type='checkbox'
-                      onClick={e => e.stopPropagation()} // Prevent row click
-                      checked={selectedRows.includes(row)}
-                      onChange={() => toggleRowSelection(row)}
-                    />
-                  </td>
-                )}
-                {columns.map((col, colIndex) => (
-                  <td key={colIndex} className='py-4 px-3'>
-                    {col.cell ? col.cell(row) : row[col.dataKey]}
-                  </td>
+      ) : !!renderData?.length ? (
+        <div className='overflow-x-auto'>
+          <table className={`w-full text-left border-collapse ${customTableClasses}`}>
+            <thead className='bg-[#F1F1F1] text-sm font-medium'>
+              <tr>
+                {selectableRows && <th className='px-4 py-4 rounded-tl-xl rounded-bl-xl'>Select</th>}
+                {columns.map((col: any, index: number) => (
+                  <th
+                    key={index}
+                    className={`px-4 py-4 text-left ${col.sortable ? 'cursor-pointer' : ''} ${
+                      !selectableRows && index === 0
+                        ? 'rounded-tl-xl rounded-bl-xl'
+                        : index === columns.length - 1
+                        ? 'rounded-tr-xl rounded-br-xl'
+                        : ''
+                    }`}
+                    onClick={() => col.sortable && handleSort(col.dataKey)}
+                  >
+                    {col.name}
+                    {col.sortable && (
+                      <span className='ml-2'>
+                        {sortConfig?.sort === col.dataKey ? (
+                          sortConfig?.order === 'ASC' ? (
+                            <FontAwesomeIcon icon={faChevronUp} />
+                          ) : (
+                            <FontAwesomeIcon icon={faChevronDown} />
+                          )
+                        ) : null}
+                      </span>
+                    )}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {renderData.map((row, index) => (
+                <tr
+                  key={index}
+                  className={`text-sm ${index % 2 === 0 ? 'bg-gray-50' : ''} ${
+                    rowClickable ? 'cursor-pointer hover:bg-gray-200' : ''
+                  }`}
+                  onClick={() => rowClickable && onRowClick(row)} // Handle row click
+                >
+                  {selectableRows && (
+                    <td className='py-4 px-3'>
+                      <input
+                        type='checkbox'
+                        onClick={e => e.stopPropagation()} // Prevent row click
+                        checked={selectedRows.includes(row)}
+                        onChange={() => toggleRowSelection(row)}
+                      />
+                    </td>
+                  )}
+                  {columns.map((col: any, colIndex: number) => (
+                    <td key={colIndex} className='py-4 px-3'>
+                      {col.cell ? col.cell(row) : row[col.dataKey]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <div className='text-center text-gray-500'>No data found</div>
+        <div className='text-center text-gray-500 my-4'>No data found</div>
       )}
 
       {enablePagination && (
         <div className='flex justify-between items-center bg-[#F1F1F1] px-2 py-2 rounded-md my-1'>
           <div>
-            Showing 1-{recordPerPage} from {paginator?.itemCount ?? '-'} data
+            {paginator?.itemCount > recordPerPage
+              ? `Showing 1-${renderData.length} of ${paginator?.itemCount ?? '-'} Records`
+              : `Showing 1-${renderData.length} Records`}
           </div>
           <div>
-            <ul className='flex items-center gap-2'>
+            {/* <ul className='flex items-center gap-2'>
               {Array.from({ length: totalPages }, (_, index) => (
                 <li
                   key={index}
@@ -272,6 +303,46 @@ const TableComponent: React.FC<TableComponentProps> = ({
                   {index + 1}
                 </li>
               ))}
+            </ul> */}
+            <ul className='flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md'>
+              {/* Previous Button */}
+              {currentPage > 1 && (
+                <li
+                  className='cursor-pointer px-3 py-1 rounded-md hover:bg-gray-200'
+                  onClick={() => handlePageChange(currentPage - 1)}
+                >
+                  <FontAwesomeIcon icon={faChevronLeft} />
+                </li>
+              )}
+
+              {/* Page Numbers */}
+              {getPageNumbers().map((page: any, index) =>
+                page === '...' ? (
+                  <li key={index} className='px-3 py-1'>
+                    ...
+                  </li>
+                ) : (
+                  <li
+                    key={index}
+                    className={`px-3 py-1 rounded-md cursor-pointer ${
+                      currentPage === page ? 'bg-primary text-white' : 'hover:bg-gray-200'
+                    }`}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </li>
+                )
+              )}
+
+              {/* Next Button */}
+              {currentPage < totalPages && (
+                <li
+                  className='cursor-pointer px-3 py-1 rounded-md hover:bg-gray-200'
+                  onClick={() => handlePageChange(currentPage + 1)}
+                >
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </li>
+              )}
             </ul>
           </div>
         </div>

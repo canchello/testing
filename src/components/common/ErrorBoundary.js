@@ -10,7 +10,7 @@ class ErrorBoundary extends React.Component {
   }
   static getDerivedStateFromError(error) {
     // Update state so the next render will show the fallback UI
-    console.info(`NKS Logs error static :>> `, error)
+    console.info(`Error Logs error static :>> `, error)
     return { hasError: true }
   }
   componentDidCatch(error, info) {

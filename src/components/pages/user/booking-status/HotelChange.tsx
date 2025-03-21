@@ -7,7 +7,7 @@ import Axios from '@/libs/axios'
 import { fetchRoomListURL, upgradeRoomURL } from '@/services/APIs/user'
 import Loader from '@/components/common/Loader'
 import Link from 'next/link'
-import { ROUTES } from '@/libs/constants'
+import { PAYMENT_STATUS, ROUTES } from '@/libs/constants'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -41,7 +41,7 @@ export default function HotelChange({ booking }: any) {
             priceRange: [currentRoomPrice, null]
           },
           options: {
-            popuplate: 'attachment',
+            popuplate: ['attachment'],
             lean: true
           }
         }
@@ -71,8 +71,15 @@ export default function HotelChange({ booking }: any) {
           upgradeRoomId: newRooms
         }
       })
+      if (data.data.booking?.status === PAYMENT_STATUS.PENDING) {
+        window.open(data?.data?.session_url)
+      }
+      if (data.data?.booking?.status === PAYMENT_STATUS.CONFIRMED) {
+        toast.success('Booking upgraded!')
+        // openModal('change-booking-success')
+        return router.push(`/my-bookings`)
+      }
       toast.success(data.message)
-      openModal('change-booking-success')
       setUpgradeSuccess(true)
     } catch (error) {
       console.error(error)
@@ -82,7 +89,7 @@ export default function HotelChange({ booking }: any) {
   }
 
   const selectedNewRoom: any = rooms.find((room: any) => room._id === selectedRoom)
-  const totalDue = booking.rooms.length * (selectedNewRoom?.price || 0) - booking.totalPrice
+  const totalDue = booking.rooms.length * (selectedNewRoom?.price || 0)
   return (
     <div className='space-y-4'>
       <div className='space-y-1 border-b pb-2'>
@@ -114,33 +121,28 @@ export default function HotelChange({ booking }: any) {
             )}
             {/* {} */}
           </div>
-          {!!rooms.length && totalDue >= 0 ? (
-            <>
-              <div className='mt-6 border-t pt-4 flex justify-between items-center'>
-                <h3 className='text-lg font-semibold'>Total Amount Due</h3>
-                <span className='text-lg font-bold text-gray-800'>${totalDue.toFixed(2) || 0}</span>
-              </div>
-              <div className='flex gap-4'>
-                {!upgradeSuccess && (
-                  <CustomButton
-                    title='Upgrade Booking'
-                    variant='primary'
-                    onClick={upgradeBooking}
-                    isLoading={upgrading}
-                  />
-                )}
-                <Link href={ROUTES.MY_BOOKINGS}>
-                  <CustomButton title='Cancel' variant='light' />
-                </Link>
-              </div>
-            </>
-          ) : (
-            <div className='flex justify-center'>
+          {/* {!!rooms.length && totalDue >= 0 ? ( */}
+          <>
+            <div className='mt-6 border-t pt-4 flex justify-between items-center'>
+              <h3 className='text-lg font-semibold'>Total Amount Due</h3>
+              <span className='text-lg font-bold text-gray-800'>${totalDue.toFixed(2) || 0}</span>
+            </div>
+            <div className='flex gap-4'>
+              {/* {!upgradeSuccess && ( */}
+              <CustomButton title='Upgrade Booking' variant='primary' onClick={upgradeBooking} isLoading={upgrading} />
+              {/* )} */}
               <Link href={ROUTES.MY_BOOKINGS}>
-                <CustomButton title='My Booking' variant='primary' />
+                <CustomButton title='Cancel' variant='light' />
               </Link>
             </div>
-          )}
+          </>
+          {/* ) : ( */}
+          {/* <div className='flex justify-center'>
+            <Link href={ROUTES.MY_BOOKINGS}>
+              <CustomButton title='My Booking' variant='primary' />
+            </Link>
+          </div> */}
+          {/* )} */}
         </div>
       )}
       <Modal

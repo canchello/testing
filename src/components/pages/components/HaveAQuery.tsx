@@ -9,6 +9,7 @@ import { Controller, useForm } from 'react-hook-form'
 import TextField from '@/components/form/TextField'
 import CustomButton from '@/components/common/CustomButton'
 import appStore from '@/stores/appStore'
+import dynamic from 'next/dynamic'
 
 type FormData = {
   name: string
@@ -17,6 +18,8 @@ type FormData = {
   message: string
   is_subscribed: boolean
 }
+
+const MapComp = dynamic(() => import('@/components/common/Map/index.jsx'), { ssr: false })
 
 export default function HaveAQuery() {
   // const [isLoading] = useState(false)
@@ -169,14 +172,15 @@ export default function HaveAQuery() {
           </p>
           <div className='overflow-hidden rounded-lg shadow-lg'>
             {/* <Image src={mapView} alt='Map' className='object-cover' width={500} height={400} layout='responsive' /> */}
-            <iframe
+            <MapComp />
+            {/* <iframe
               src='https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d53609.17595954849!2d13.147135859146331!3d32.883002227396815!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x13a892c4c11c43d9%3A0x8d99d8947b5cec86!2sTripoli%2C%20Libya!5e0!3m2!1sen!2sin!4v1734160114064!5m2!1sen!2sin'
               // style={{ width: '500', height: '400' }}
               className='h-full min-h-96 w-full'
               // allowfullscreen=''
               loading='lazy'
               // referrerpolicy='no-referrer-when-downgrade'
-            ></iframe>
+            ></iframe> */}
           </div>
         </div>
 

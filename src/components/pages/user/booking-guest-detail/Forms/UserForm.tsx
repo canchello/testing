@@ -3,12 +3,12 @@ import CustomTextArea from '@/components/form/TextareaInput'
 import React from 'react'
 import { Controller } from 'react-hook-form'
 
-export default function UserForm({ control, errors }: any) {
+export default function UserForm({ control, errors, fieldPrefix }: any) {
   return (
     <div>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <Controller
-          name='user.firstName'
+          name={`${fieldPrefix}.firstName`}
           control={control}
           rules={{ required: 'First Name is required' }}
           render={({ field }) => (
@@ -16,13 +16,13 @@ export default function UserForm({ control, errors }: any) {
               {...field}
               label='First name'
               placeholder='Enter First Name'
-              error={errors?.user?.firstName?.message}
+              error={errors?.[fieldPrefix]?.firstName?.message}
               required
             />
           )}
         />
         <Controller
-          name='user.lastName'
+          name={`${fieldPrefix}.lastName`}
           control={control}
           rules={{ required: 'Last Name is required' }}
           render={({ field }) => (
@@ -30,27 +30,28 @@ export default function UserForm({ control, errors }: any) {
               {...field}
               label='Last name'
               placeholder='Enter Last Name'
-              error={errors?.user?.lastName?.message}
+              error={errors?.[fieldPrefix]?.lastName?.message}
               required
             />
           )}
         />
         <Controller
-          name='user.email'
+          name={`${fieldPrefix}.email`}
           control={control}
+          rules={{ required: 'Email is required' }}
           render={({ field }) => (
             <TextInput
               {...field}
               // value={user.email}
               label='Email Address'
-              error={errors?.user?.email?.message}
+              error={errors?.[fieldPrefix]?.email?.message}
               placeholder='Enter Email Address'
               required
             />
           )}
         />
         <Controller
-          name='user.contact'
+          name={`${fieldPrefix}.phoneNumber`}
           control={control}
           rules={{ required: 'Contact number is required' }}
           render={({ field }) => (
@@ -58,7 +59,7 @@ export default function UserForm({ control, errors }: any) {
               {...field}
               label='Contact Number'
               placeholder='Enter Contact Number'
-              error={errors?.user?.contact?.message}
+              error={errors?.[fieldPrefix]?.phoneNumber?.message}
               required
             />
           )}
@@ -73,7 +74,6 @@ export default function UserForm({ control, errors }: any) {
                 label='Special Request'
                 placeholder='Tell us more about your request...'
                 error={errors?.specialRequest?.message}
-                required
               />
             )}
           />

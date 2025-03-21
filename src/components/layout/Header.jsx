@@ -27,6 +27,11 @@ import ArabicImg from '@/assets/images/Arab-Flag.png'
 // import barImg from '@/assets/svg/arrowDown.svg'
 import Image from 'next/image'
 import LanguageSelector from '../common/LanguageSelector'
+import { getImage } from '@/utils/helper'
+import { cn } from '@/libs/tailwind'
+import Axios from '@/libs/axios'
+import { notificationDeleteURL, notificationListURL } from '@/services/APIs/user'
+import dayjs from 'dayjs'
 
 const NavbarItem = ({ label, href, isMenu }) => {
   const pathname = usePathname()
@@ -63,6 +68,7 @@ const nav_items = [
 const Header = () => {
   const { user } = userStore()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
   const pathname = usePathname()
   const dropdownRef = useRef()
 
@@ -117,7 +123,7 @@ const Header = () => {
 
             </div>
             {/* Desktop Menu */}
-            <div className={cn('space-x-4 font-semibold hidden lg:flex', isAuthUserRoute && "lg:hidden")}>
+            <div className={cn('gap-4 font-semibold hidden lg:flex', isAuthUserRoute && "lg:hidden")}>
               {nav_items
                 .filter(i => i.access.startsWith("/stays"))
                 .map((item, index) => <NavbarItem key={index} label={item.title} href={item.route} />)}
@@ -133,23 +139,17 @@ const Header = () => {
 
         {user ? (
           <div className='flex gap-3'>
+            <NotificationDropDown />
             <div className='dropdown dropdown-end hidden lg:block'>
               <div className='flex items-center gap-3' tabIndex={0}>
-                <CustomButton
-                  className='btn-circle border-none !p-0'
-                  title={<FontAwesomeIcon fontSize={'large'} icon={faBell} />}
-                />
+                <Link href={ROUTES.MESSAGES}>
+                  <CustomButton
+                    className='btn-circle border-none !p-0'
+                    title={<FontAwesomeIcon fontSize={'large'} icon={faMessage} />}
+                  />
+                </Link>
               </div>
-              <NotificationDropDown />
-            </div>
-            <div className='dropdown dropdown-end hidden lg:block'>
-              <div className='flex items-center gap-3' tabIndex={0}>
-                <CustomButton
-                  className='btn-circle border-none !p-0'
-                  title={<FontAwesomeIcon fontSize={'large'} icon={faMessage} />}
-                />
-              </div>
-              <MessagesDropDown />
+              {/* <MessagesDropDown /> */}
             </div>
             <div className='dropdown dropdown-end'>
               <div className='flex items-center gap-3' tabIndex={0}>
@@ -252,65 +252,78 @@ const ProfileDropDown = ({ }) => {
   )
 }
 
-const NotificationDropDown = () => {
-  const notifications = [
-    {
-      id: 1,
-      title: 'Booking Confirmed',
-      message: 'Your Booking for 12/Dec/2024 has been confirmed',
-      time: 'now'
-    },
-    {
-      id: 2,
-      title: 'Booking Confirmed',
-      message: 'Your Booking for 12/Dec/2024 has been confirmed',
-      time: '12/07/24'
-    }
-  ]
+export const NotificationDropDown = ({ btnClass }) => {
+  const [notifications, setNotifications] = useState([]);
+
+  const fetchNotification = async () => {
+    const { data } = await Axios({ ...notificationListURL });
+    setNotifications(data?.data?.data || []);
+  };
+
+  useEffect(() => {
+    fetchNotification();
+  }, []);
+
+  const onDeleteNotification = async (id) => {
+    setNotifications((prev) => prev.filter((notification) => notification._id !== id));
+    await Axios({ ...notificationDeleteURL(id) });
+  };
+
   return (
-    <ul tabIndex={0} className='dropdown-content menu bg-base-100 text-black rounded-box z-[1] mt-4 w-96 p-2 shadow'>
-      {notifications.map((notification, index) => (
-        <React.Fragment key={index}>
-          <li>
-            <div key={notification.id} className={`flex items-start p-4`}>
-              <div className='flex-shrink-0'>
-                <span className='w-8 h-8 inline-flex items-center justify-center rounded-full bg-green-100 text-green-500'>
-                  <FontAwesomeIcon icon={faCheckCircle} />
-                </span>
-              </div>
-              <div className='ml-3'>
-                <p className='font-semibold text-sm'>{notification.title}</p>
-                <p className='text-gray-600 text-sm'>{notification.message}</p>
-              </div>
-              <div className='ml-auto flex flex-col items-end'>
-                <button className='text-gray-400 hover:text-red-500 transition duration-200'>
-                  <FontAwesomeIcon icon={faClose} />
-                </button>
-                <span className='text-xs text-gray-400 mt-2'>{notification.time}</span>
-              </div>
-            </div>
-          </li>
-          {index < notifications.length - 1 && <div className='border-b my-2' />}
-        </React.Fragment>
-      ))}
-    </ul>
-  )
-}
-import no_messages from '@/assets/images/no_messages.jpg'
-import { getImage } from '@/utils/helper'
-import { cn } from '@/libs/tailwind'
-const MessagesDropDown = () => {
-  const messages = []
-  return (
-    <div
-      tabIndex={0}
-      className='flex dropdown-content menu bg-base-100 text-black rounded-box z-[1] mt-4 w-96 p-4 shadow'
-    >
-      <div className='flex flex-col justify-center items-center text-center'>
-        <Image src={no_messages} alt='' />
-        <p className='text-xl font-bold'>No Messages!</p>
-        <p className='text-lg'>It seems like you don't have any messages at the moment.</p>
+    <div className='dropdown dropdown-end hidden lg:block'>
+      <div className='flex items-center gap-3' tabIndex={0}>
+        <div class="indicator">
+          {!!notifications.length && <span class="indicator-item badge badge-warning top-1 right-2"></span>}
+          <CustomButton
+            className={cn('btn-circle border-none !p-0', btnClass)}
+            title={<FontAwesomeIcon fontSize={'large'} icon={faBell} />}
+          />
+          {/* <div class="bg-base-300 grid h-32 w-32 place-items-center">content</div> */}
+        </div>
+      </div>
+      <div
+        tabIndex={0}
+        className="dropdown-content menu bg-base-100 text-black rounded-box z-[10] mt-4 w-96 shadow"
+      >
+        {/* Scrollable Wrapper */}
+        <ul className="max-h-96 overflow-y-auto overflow-x-hidden p-2 custom-scrollbar">
+          {!!notifications.length ? (
+            notifications.map((notification, index) => (
+              <React.Fragment key={index}>
+                <li>
+                  <div key={notification._id} className="flex items-start p-4">
+                    <div className="flex-shrink-0">
+                      <span className="w-8 h-8 inline-flex items-center justify-center rounded-full bg-green-100 text-green-500">
+                        <FontAwesomeIcon icon={faCheckCircle} />
+                      </span>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="font-semibold text-sm">{notification.title}</p>
+                      <p className="text-gray-600 text-sm">{notification.text}</p>
+                      <span className="text-xs text-gray-400 mt-2 flex justify-end">
+                        {dayjs(notification.createdAt).format('DD-MM-YY hh:mm A')}
+                      </span>
+                    </div>
+                    <div className="ml-auto flex flex-col items-end">
+                      <FontAwesomeIcon
+                        className="text-gray-400 hover:text-red-500 transition duration-200 cursor-pointer"
+                        icon={faClose}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onDeleteNotification(notification._id);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </li>
+                {index < notifications.length - 1 && <div className="border-b my-2" />}
+              </React.Fragment>
+            ))
+          ) : (
+            <div className="flex items-center justify-center p-4">No Notifications!</div>
+          )}
+        </ul>
       </div>
     </div>
-  )
-}
+  );
+};

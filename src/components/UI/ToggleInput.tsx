@@ -4,11 +4,18 @@ import React, { useState } from 'react'
 interface ToggleProps {
   label?: any
   isChecked?: boolean
+  disabled?: boolean
   onChange?: (checked: boolean) => void
   className?: string
 }
 
-const ToggleInput: React.FC<ToggleProps> = ({ label = <></>, isChecked = false, onChange, className = '' }) => {
+const ToggleInput: React.FC<ToggleProps> = ({
+  label = <></>,
+  disabled,
+  isChecked = false,
+  onChange,
+  className = ''
+}) => {
   const [checked, setChecked] = useState(isChecked)
 
   const handleToggleChange = () => {
@@ -25,6 +32,7 @@ const ToggleInput: React.FC<ToggleProps> = ({ label = <></>, isChecked = false, 
           className={cn('toggle !bg-white border-none', isChecked ? '[--tglbg:#15253B]' : '[--tglbg:#b9b9b9]')}
           checked={checked}
           onChange={handleToggleChange}
+          disabled={disabled}
           aria-label={label}
         />
       </label>

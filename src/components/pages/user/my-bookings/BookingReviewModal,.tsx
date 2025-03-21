@@ -7,21 +7,29 @@ import Rating from '@/components/UI/Rating'
 import Axios from '@/libs/axios'
 import { createReviewURL } from '@/services/APIs/user'
 import { toast } from 'sonner'
+import ToggleInput from '@/components/UI/ToggleInput'
 
 interface EditableReview {
   rating: number
   title: string
   description: string
+  cleanliness: number
+  staff: number
+  location: number
+  amenities: number
+  valueForMoney: number
 }
 
 interface RevieBookingModalProps {
   title?: EditableReview
   propertyId?: any
+  bookingId?: any
   onSave?: any // Callback to save changes
   onClose: () => void // Callback to close the modal
 }
 
-const BookingReviewModal: React.FC<RevieBookingModalProps> = ({ propertyId, onSave, onClose }) => {
+const BookingReviewModal: React.FC<RevieBookingModalProps> = ({ propertyId, bookingId, onSave, onClose }) => {
+  const [detailedReview, setDetailedReview] = React.useState(false)
   const {
     control,
     handleSubmit,
@@ -29,9 +37,12 @@ const BookingReviewModal: React.FC<RevieBookingModalProps> = ({ propertyId, onSa
     setValue
   } = useForm<EditableReview>({
     defaultValues: {
-      //   review: review.review || '',
-      //   description: review.description || '',
-      rating: 1
+      rating: 1,
+      cleanliness: 0,
+      staff: 0,
+      location: 0,
+      amenities: 0,
+      valueForMoney: 0
     }
   })
 
@@ -41,11 +52,12 @@ const BookingReviewModal: React.FC<RevieBookingModalProps> = ({ propertyId, onSa
         ...createReviewURL,
         data: {
           ...data,
-          propertyId: propertyId
+          propertyId,
+          bookingId
         }
       })
       toast.success(res.message)
-      onClose() // Close modal
+      onClose()
     } catch (error) {
       console.error(error)
     }
@@ -59,15 +71,49 @@ const BookingReviewModal: React.FC<RevieBookingModalProps> = ({ propertyId, onSa
           Let us know about your experience with the [hotel/taxi service]! Your feedback helps us improve and assists
           future travellers in making the best choices.
         </p>
-        <Controller
-          name='rating'
-          control={control}
-          render={({ field }) => (
-            <Rating rating={field.value} total={5} disabled={false} onChange={newRating => field.onChange(newRating)} />
-          )}
-        />
+        {!detailedReview && (
+          <Controller
+            name='rating'
+            control={control}
+            render={({ field }) => (
+              <Rating
+                rating={field.value}
+                total={5}
+                disabled={false}
+                onChange={newRating => field.onChange(newRating)}
+              />
+            )}
+          />
+        )}
       </div>
-      <form className='flex flex-col gap-4  p-4' onSubmit={handleSubmit(onSubmit)}>
+      <form className='flex flex-col gap-4 p-4' onSubmit={handleSubmit(onSubmit)}>
+        <ToggleInput
+          label={<h1 className='text-lg'>Would you like to provide a Detailed Rating?</h1>}
+          isChecked={detailedReview}
+          onChange={val => setDetailedReview(val)}
+        />
+        {detailedReview && (
+          <div className='flex flex-col gap-2'>
+            {['cleanliness', 'staff', 'location', 'amenities', 'valueForMoney'].map((category: any) => (
+              <Controller
+                key={category}
+                name={category}
+                control={control}
+                render={({ field }) => (
+                  <div className='flex items-center gap-2 flex-wrap'>
+                    <label className='font-medium capitalize min-w-40'>{category}:</label>
+                    <Rating
+                      rating={field.value}
+                      total={5}
+                      disabled={false}
+                      onChange={newRating => field.onChange(newRating)}
+                    />
+                  </div>
+                )}
+              />
+            ))}
+          </div>
+        )}
         <Controller
           name='title'
           control={control}

@@ -11,10 +11,11 @@ import Axios from '@/libs/axios'
 import { fetchUserBookingListURL } from '@/services/APIs/booking'
 import { useParams } from 'next/navigation'
 import Loader from '@/components/common/Loader'
+import { ROUTES } from '@/libs/constants'
 
 const BookingCheckout = () => {
   const [isLoading, setLoading] = useState(false)
-  const [bookingDetails, setBookingDetails] = useState(null)
+  const [bookingDetails, setBookingDetails] = useState<any>(null)
   const params = useParams()
   const fetchUserBookingDetails = async () => {
     setLoading(true)
@@ -22,13 +23,15 @@ const BookingCheckout = () => {
       query: {
         _id: params?.id
       },
-      populate: 'rooms property',
-      lean: true,
-      findOne: true
+      options: {
+        populate: 'rooms property',
+        lean: true,
+        findOne: true
+      }
     }
     try {
-      const response:any = await Axios({ ...fetchUserBookingListURL, data: payload })
-      setBookingDetails(response.data?.data?.data[0])
+      const { data }: any = await Axios({ ...fetchUserBookingListURL, data: payload })
+      setBookingDetails(data?.data)
       setLoading(false)
     } catch (error) {
       console.log('error', error)
@@ -36,7 +39,6 @@ const BookingCheckout = () => {
     }
   }
 
-  
   useEffect(() => {
     if (params.id) {
       fetchUserBookingDetails()
@@ -45,29 +47,37 @@ const BookingCheckout = () => {
 
   return (
     <div className='container mx-auto p-4'>
-       {isLoading ? <div className='h-screen flex justify-center items-center'><Loader/></div> :
-      <div className='flex flex-col lg:flex-row gap-4'>
-        <BookValues bookingDetails={bookingDetails} />
-        <div className='flex-1 space-y-4 lg:w-[calc(100vw_-280px)]'>
-          <Link href='/booking/checkout'>
-            <CustomButton
-              title='Back to Selection'
-              variant='default'
-              ImageIcon={false}
-              icon={
-                <div className='rounded-full bg-primary p-2 h-8 w-8'>
-                  <FontAwesomeIcon icon={faChevronLeft} color='white' />
-                </div>
-              }
-              className='!p-0'
-              iconPosition='left'
-            />
-          </Link>
-              <RoomDetails bookingDetails={bookingDetails}  />
-              <GuestDetails bookingDetails={bookingDetails} />
+      {isLoading ? (
+        <div className='h-screen flex justify-center items-center'>
+          <Loader />
         </div>
-      </div>
-      }
+      ) : (
+        <div className='flex flex-col lg:flex-row gap-4'>
+          <BookValues bookingDetails={bookingDetails} />
+          <div className='flex-1 space-y-4 lg:w-[calc(100vw_-280px)]'>
+            <Link
+              href={
+                bookingDetails?.propertyId ? `/booking/checkout/${bookingDetails?.propertyId}` : ROUTES.SEARCH_RESULTS
+              }
+            >
+              <CustomButton
+                title='Back to Selection'
+                variant='default'
+                ImageIcon={false}
+                icon={
+                  <div className='rounded-full bg-primary p-2 h-8 w-8'>
+                    <FontAwesomeIcon icon={faChevronLeft} color='white' />
+                  </div>
+                }
+                className='!p-0'
+                iconPosition='left'
+              />
+            </Link>
+            <RoomDetails bookingDetails={bookingDetails} />
+            <GuestDetails bookingDetails={bookingDetails} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

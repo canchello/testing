@@ -14,7 +14,11 @@ const ForgotPassword = () => {
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-2'>
-      {isMailSent ? <EmailSentForm /> : <ForgotPasswordForm onSentEmail={() => setMailSent(true)} />}
+      {isMailSent ? (
+        <EmailSentForm email={isMailSent} />
+      ) : (
+        <ForgotPasswordForm onSentEmail={email => setMailSent(email)} />
+      )}
       <div className='hidden md:flex justify-center flex-col md:flex-row min-h-screen w-full'>
         <div className='flex justify-center w-full md:h-screen md:max-h-screen relative p-2 rounded-xl'>
           <Link href={'/'} className='flex absolute justify-center top-2 right-8 ml-8 z-50 mt-4 cursor-pointer'>

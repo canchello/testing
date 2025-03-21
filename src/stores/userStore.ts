@@ -5,7 +5,7 @@ import Axios from '@/libs/axios'
 import { fetchUserProfileURL, logoutUserURL } from '@/services/APIs/user'
 
 const initialValues = {
-  wishListData:[]
+  wishListData: []
 }
 
 const userStore = create()((set, get) => ({
@@ -42,8 +42,11 @@ const userStore = create()((set, get) => ({
       console.log('error', error)
     }
   },
+  getProfileMe: () => set((prev: any) => ({ profileMeget: (prev.profileMeget || 0) + 1 })),
   fetchUserProfile: async (token = '', cb = () => {}) => {
     try {
+      const { fetchingUser }: any = userStore.getState()
+      if (fetchingUser) return
       set({ fetchingUser: true })
       const { data: res }: any = await Axios({
         ...fetchUserProfileURL,
@@ -65,11 +68,11 @@ const userStore = create()((set, get) => ({
   },
   updateUserProfile: async () => {
     try {
-      // set({ updatingUser: true })
-      // const { data: res }: any = await Axios({ ...fetchUserProfileURL })
-      // if (res.status === 1) {
-      //   set({ user: res.data })
-      // }
+      set({ updatingUser: true })
+      const { data: res }: any = await Axios({ ...fetchUserProfileURL })
+      if (res.status === 1) {
+        set({ user: res.data })
+      }
     } catch (error) {
       console.error(error)
     } finally {
@@ -77,8 +80,8 @@ const userStore = create()((set, get) => ({
     }
   },
 
-  setUserWishList: async(data:any)=>{
-    set({wishListData:data})
+  setUserWishList: async (data: any) => {
+    set({ wishListData: data })
   }
 }))
 

@@ -4,6 +4,7 @@ import { faBaby, faPeopleGroup } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import dayjs from 'dayjs'
 import React from 'react'
+import { toast } from 'sonner'
 
 export default function BookValues({ bookingDetails, isLoading }: any) {
   const { hotelFilters, setHotelFilters }: any = hotelStore()
@@ -36,14 +37,27 @@ export default function BookValues({ bookingDetails, isLoading }: any) {
               label='Check-In date'
               placeholder='Enter Check In'
               value={dayjs(bookingDetails?.checkIn).format('YYYY-MM-DD') ?? hotelFilters?.checkIn}
-              onChange={e => setHotelFilters({ ...hotelFilters, checkIn: e.target.value })}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={e => {
+                if (hotelFilters?.checkOut && dayjs(e.target.value).isAfter(hotelFilters?.checkOut)) {
+                  return toast.error('Check-in date must be before check-out date')
+                  // return setHotelFilters({ ...hotelFilters, checkIn: e.target.value, checkOut: e.target.value })
+                }
+                setHotelFilters({ ...hotelFilters, checkIn: e.target.value })
+              }}
             />
             <CustomDateInput
               label='Check-out date'
               disabled={!!bookingDetails?.checkOut}
               placeholder='Enter Check out'
               value={dayjs(bookingDetails?.checkOut).format('YYYY-MM-DD') ?? hotelFilters?.checkOut}
-              onChange={e => setHotelFilters({ ...hotelFilters, checkOut: e.target.value })}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={e => {
+                if (hotelFilters?.checkIn && dayjs(e.target.value).isBefore(hotelFilters?.checkIn)) {
+                  return toast.error('Check-Out date must be after check-in date')
+                }
+                setHotelFilters({ ...hotelFilters, checkOut: e.target.value })
+              }}
             />
           </div>
           <div className='flex justify-between items-center bg-white p-3 rounded-lg gap-2 text-lg'>

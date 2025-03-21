@@ -17,6 +17,7 @@ interface FormData {
 const Preferences = () => {
   const { user, setUser }: any = userStore()
   const [isLoading, setLoading] = useState(false)
+  const [isLoadingSwitch, setLoadingSwitch] = useState(false)
 
   const {
     control,
@@ -52,6 +53,33 @@ const Preferences = () => {
     }
   }
 
+  const toggleReceiveNotification = async () => {
+    try {
+      setLoadingSwitch(true)
+      const updatedPreference = !user?.receive_notifications // Toggle current state
+
+      // Optimistically update UI
+      setUser({ ...user, receive_notifications: updatedPreference })
+
+      // Send API request to update preference in the backend
+      await Axios({
+        ...updateUserProfileURL,
+        data: { receive_notifications: updatedPreference },
+        method: 'PATCH' // Assuming a PATCH request
+      })
+
+      toast.success(`Notifications ${updatedPreference ? 'enabled' : 'disabled'} successfully!`)
+    } catch (error) {
+      console.error('Failed to update notification preference:', error)
+      toast.error('Something went wrong while updating notifications!')
+
+      // Revert to previous state if API call fails
+      setUser({ ...user, receive_notifications: !user?.receive_notifications })
+    } finally {
+      setLoadingSwitch(false)
+    }
+  }
+
   const onSubmit = () => {
     const updatedPreferenceFields = {} as any
     const formValues = getValues() as any
@@ -70,8 +98,9 @@ const Preferences = () => {
       <div>
         <ToggleInput
           label={<h1 className='text-lg font-semibold'>Receive Notification from us?</h1>}
-          isChecked
-          onChange={() => {}}
+          isChecked={user.receive_notifications}
+          disabled={isLoadingSwitch}
+          onChange={toggleReceiveNotification}
         />
         <span className='text-base font-normal text-muted'>
           Stay Informed about the latest updates, offers, and news directly to your email and registered phone number.

@@ -6,20 +6,9 @@ import Link from 'next/link'
 // import CustomButton from '../common/CustomButton'
 import userStore from '@/stores/userStore'
 // import AppLogo from '../common/Logo'
-import { languages, PROFILE_STATUS, ROUTES } from '@/libs/constants'
+import { PROFILE_STATUS, ROUTES } from '@/libs/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {
-  faBell,
-  faCheckCircle,
-  faClose,
-  faHeadset,
-  faHeart,
-  faHouseFlag,
-  faMessage,
-  faStar,
-  faUser,
-  faWallet
-} from '@fortawesome/free-solid-svg-icons'
+import { faCheckCircle, faClose } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 
 interface NavbarItemProps {
@@ -45,7 +34,8 @@ const NavbarItem: React.FC<NavbarItemProps> = ({ label, href }) => {
 }
 
 const Header: React.FC = () => {
-  const { user }: any = userStore()
+  const { user, logout }: any = userStore()
+  const router = useRouter()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const pathname = usePathname()
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -75,6 +65,11 @@ const Header: React.FC = () => {
     }
   }, [])
 
+  const onLogout = () => {
+    logout()
+    router.push(ROUTES.VENDOR.LOGIN)
+  }
+
   return (
     <div className='bg-custom-dark-blue justify-items-center text-white py-4 px-2 sm:px-4 md:px-8'>
       <div className='container flex justify-between'>
@@ -95,7 +90,7 @@ const Header: React.FC = () => {
 
         {user ? (
           <div className='flex gap-4'>
-            <CustomButton title='Logout' />
+            <CustomButton title='Logout' onClick={() => onLogout()} />
           </div>
         ) : (
           <div className='hidden md:flex md:w-[340px] justify-end gap-4'>
@@ -110,43 +105,6 @@ const Header: React.FC = () => {
 }
 
 export default Header
-
-const ProfileDropDown = ({}) => {
-  const router = useRouter()
-  const { logout, clearAuthState }: any = userStore()
-
-  const onLogout = () => {
-    logout()
-    router.push('/login')
-  }
-
-  return (
-    <ul tabIndex={0} className='dropdown-content menu bg-base-100 text-black rounded-box z-[1] mt-4 w-72 p-2 shadow'>
-      {[
-        { title: 'Manage Account', icon: faUser, route: ROUTES.PROFILE.PERSONAL_DETAILS },
-        { title: 'My Bookings', icon: faHouseFlag, route: ROUTES.MY_BOOKINGS },
-        { title: 'My Reviews', icon: faStar, route: ROUTES.MY_REVIEWS },
-        { title: 'Wishlist', icon: faHeart, route: ROUTES.MY_WISHLIST },
-        { title: 'Wallet', icon: faWallet, route: ROUTES.WALLET_REWARDS },
-        { title: 'Customer Support', icon: faHeadset, route: ROUTES.CUSTOMER_SUPPORT }
-      ].map((item, index) => {
-        return (
-          <Link href={item.route}>
-            <li key={index + item.title} className='flex flex-row items-center rounded-lg'>
-              <div className='w-full'>
-                <FontAwesomeIcon icon={item.icon} className='hover:bg-transparent' />
-                <span className='font-semibold hover:bg-transparent focus:bg-transparent p-0'>{item.title}</span>
-              </div>
-            </li>
-          </Link>
-        )
-      })}
-      <li className='mt-2'>
-        <CustomButton title='Logout' variant='error' onClick={() => onLogout()} />
-      </li>
-    </ul>
-  )
-}
 
 const NotificationDropDown = () => {
   const notifications = [
@@ -193,7 +151,6 @@ const NotificationDropDown = () => {
   )
 }
 import no_messages from '@/assets/images/no_messages.jpg'
-import { getImage } from '@/utils/helper'
 import AppLogo from '@/components/common/Logo'
 import CustomButton from '@/components/common/CustomButton'
 const MessagesDropDown = () => {

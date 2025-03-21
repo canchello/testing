@@ -1,0 +1,17 @@
+export const FIELD_TYPES = Object.freeze({
+    input: "input",
+    phone: "phone",
+    radio: "radio",
+    checkbox: "checkbox",
+    textarea: "textarea",
+    tags: "tags",
+    switch: "switch",
+    date: "date",
+    dateRange: "dateRange",
+    numberRange: "numberRange",
+    time: "time",
+    timeRange: "timeRange",
+    select: "select",
+    fileUpload: "fileUpload",
+    ckEditor: "ckEditor",
+});

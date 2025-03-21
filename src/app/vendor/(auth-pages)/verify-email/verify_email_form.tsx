@@ -4,9 +4,9 @@ import { Controller, useForm } from 'react-hook-form'
 import CustomButton from '@/components/common/CustomButton'
 import Axios from '@/libs/axios'
 import { verifyOTP_URL } from '@/services/APIs/user'
-import userStore from '@/stores/userStore'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
+import { ROUTES } from '@/libs/constants'
 
 interface FormData {
   otp: string[]
@@ -14,7 +14,7 @@ interface FormData {
 
 const VerifyEmailForm = () => {
   const router = useRouter()
-  const { user }: any = userStore()
+  const searchParams = useSearchParams()
   const {
     control,
     handleSubmit,
@@ -28,10 +28,6 @@ const VerifyEmailForm = () => {
   const [isResendDisabled, setIsResendDisabled] = useState(true)
   const [timer, setTimer] = useState(120) // 2 minutes
   const inputRefs = useRef<HTMLInputElement[]>([])
-
-  // useEffect(() => {
-  //   if (!localStorage.getItem(localstorage.VERIFICATION_TOKEN)) router.back()
-  // }, [])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -51,16 +47,17 @@ const VerifyEmailForm = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
+      const userId = searchParams.get('id') || ''
       setIsLoading(true)
       const otp = data.otp.join('')
       const payload = {
-        email: user.email,
+        userId,
         otp: Number(otp)
       }
       const { data: res }: any = await Axios({ ...verifyOTP_URL, data: payload })
       if (res.status === 1) {
         toast.success(res.message)
-        router.push('/login')
+        router.push(ROUTES.VENDOR.LOGIN)
       }
     } catch (error) {
       console.error(error)

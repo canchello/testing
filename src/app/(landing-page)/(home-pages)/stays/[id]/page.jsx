@@ -29,13 +29,13 @@ const Booking = () => {
             // checkOut: hotelFilters.checkOut,
           },
           "options": {
-            "populate": ["facility", "rules", "attachment"],
+            "populate": ["facilities", "rules", "attachment"],
             "lean": true
           }
         }
       })
-      setPropertyData(data.data.data?.find(i => i._id === params.id))
-      setselectedHotel(data.data.data?.find(i => i._id === params.id))
+      setPropertyData(data.data?.data?.find(i => i._id === params.id))
+      setselectedHotel(data.data?.data?.find(i => i._id === params.id))
     } catch (error) {
       console.error(error);
     }

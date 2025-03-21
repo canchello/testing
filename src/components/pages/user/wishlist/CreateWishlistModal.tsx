@@ -16,16 +16,18 @@ interface FormData {
 }
 
 const CreateWishlistModal = () => {
+  const [loading, setLoading] = useState(false)
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors }
   } = useForm<FormData>({
     defaultValues: {
       name: ''
     }
   })
-  const{user,setUserWishList}:any=userStore();
+  const { user, setUserWishList }: any = userStore()
   const fetchUserWishList = async () => {
     const payload = {
       query: {
@@ -37,27 +39,27 @@ const CreateWishlistModal = () => {
       }
     }
     try {
-      const response: any = await Axios({ ...wishlistListingURL, data: payload })
-      setUserWishList(response.data.data.data)
+      const { data }: any = await Axios({ ...wishlistListingURL, data: payload })
+      setUserWishList(data?.data?.data || [])
     } catch (error) {
       console.error('Error fetching wishlist:', error)
     }
   }
 
-  const createWishList = async(data : any)=>{   
+  const onSubmit = async (data: any) => {
     try {
-      const response : any = await Axios({...createWishListURL,data})
-      toast.success("Wishlist created successfully!")
-      closeModal("create-wishlist-modal")
-      fetchUserWishList();
-      return response.data.data
+      setLoading(true)
+      const { data: res }: any = await Axios({ ...createWishListURL, data })
+      toast.success('Wishlist created successfully!')
+      closeModal('create-wishlist-modal')
+      await fetchUserWishList()
+      reset()
+      return res.data
     } catch (error) {
       console.log('error', error)
+    } finally {
+      setLoading(false)
     }
-  }
-
-  const onSubmit = (data: any) => {
-    createWishList(data)
   }
 
   return (
@@ -86,7 +88,7 @@ const CreateWishlistModal = () => {
           )}
         />
         <div className='justify-items-center'>
-          <CustomButton title='Continue' type='submit' />
+          <CustomButton title='Continue' type='submit' isLoading={loading} />
         </div>
       </form>
     </div>

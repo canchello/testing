@@ -1,11 +1,8 @@
 'use client'
 import React, { useState } from 'react'
 
-import Image from 'next/image'
 import AppLogo from '@/components/common/Logo'
 import Link from 'next/link'
-import ForgotPasswordImg from '@/assets/svg/ForgotPassword.svg'
-import EmailSentImg from '@/assets/svg/EmailSent.svg'
 import ForgotPasswordForm from './password_form'
 import EmailSentForm from './email_form'
 import { cn } from '@/libs/tailwind'
@@ -29,7 +26,11 @@ const ForgotPassword = () => {
           </Link>
         </div>
       </div>
-      {isMailSent ? <EmailSentForm /> : <ForgotPasswordForm onSentEmail={() => setMailSent(true)} />}
+      {isMailSent ? (
+        <EmailSentForm email={isMailSent} />
+      ) : (
+        <ForgotPasswordForm onSentEmail={email => setMailSent(email)} />
+      )}
     </div>
   )
 }

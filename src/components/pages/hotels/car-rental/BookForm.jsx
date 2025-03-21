@@ -8,28 +8,89 @@ import CustomTextInput from '@/components/form/TextField'
 import { faCheckCircle, faClose } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Axios from '@/libs/axios'
-import { requestTaxiURL } from '@/services/APIs/user'
+import { airportListURL, requestTaxiURL } from '@/services/APIs/user'
 import { toast } from 'sonner'
 import { ConfirmModal } from '../../user/booking-status/HotelChange'
 import Modal, { openModal } from '@/components/UI/Modal'
 import { Controller, useForm } from 'react-hook-form'
+import MapOption from './MapOption'
+import { cn } from '@/libs/tailwind'
+import TextInput from '@/components/form/LabelInput'
+import { useMount } from 'react-use'
+import utc from 'dayjs/plugin/utc'
+import dayjs from 'dayjs'
+
+dayjs.extend(utc)
 
 export default function BookForm() {
   const [loading, setLoading] = useState(false)
+  const [mapLocation, setMapLocation] = useState(false)
   const {
     control,
     handleSubmit,
     formState: { errors },
-    reset
-  } = useForm()
+    reset,
+    setValue
+  } = useForm({
+    defaultValues: {
+      pickUpLocation: '',
+      dropOffLocation: '',
+      pickupDate: '',
+      pickupTime: '',
+      passengerCount: '',
+      bagCount: '',
+      rideType: '',
+      flightNumber: ''
+    },
+    mode: 'onSubmit',
+  })
+
+  const [fromAddress, setFromAddress] = useState('airport')
+  const [airportOptions, setAirports] = useState([
+    { label: 'Select Option', value: '' },
+    { label: 'Tripoli International Airport', value: 'Tripoli International Airport' },
+    { label: 'Mitiga International Airport', value: 'Mitiga International Airport' },
+    { label: 'Al Abraq International Airport', value: 'Al Abraq International Airport' }
+  ])
+
+  const handleFromChange = (e) => {
+    setFromAddress(e.target.value)
+  }
+  const fetchAirports = async () => {
+    try {
+      const { data } = await Axios({ ...airportListURL })
+      const options = data.data?.data.map(i => ({ label: i.address, value: i.address }))
+      setAirports(options || [])
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  useMount(fetchAirports)
+  const hotelOptions = [
+    { label: 'Select Option', value: '' },
+    { label: 'Al Waddan Hotel', value: 'Al Waddan Hotel' },
+    { label: 'Flames Dumas', value: 'Flames Dumas' },
+    { label: 'La fountain blu', value: 'La fountain blu' },
+  ]
+
+  // const handleToChange = (value) => {
+  //   setToAddress(value)
+  //   setFromAddress(value === 'Airport' ? 'Hotel' : 'Airport')
+  // }
 
   const onSubmit = async (formdata) => {
     try {
+      if (Object.values(formdata).some(value => !value)) {
+        toast.warning("Please fill in all form fields.");
+        return;
+      }
       setLoading(true)
       let payload = { ...formdata }
-      console.log('payload', payload)
       if (payload.pickupDate && payload.pickupTime) {
-        payload.pickupDateTime = payload.pickupDate && payload.pickupTime && `${payload.pickupDate}T${payload.pickupTime}:00`
+        payload.pickupDateTime = payload.pickupDate && payload.pickupTime &&
+          dayjs(`${payload.pickupDate} ${payload.pickupTime}`).utc().format()
+
         delete payload.pickupDate
         delete payload.pickupTime
       }
@@ -52,40 +113,84 @@ export default function BookForm() {
         ride is confirmed.
       </p>
       <form onSubmit={handleSubmit(onSubmit)} className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-        <Controller
-          name='pickUpLocation'
-          control={control}
-          render={({ field }) => (
-            <CustomSelect
-              {...field}
-              className={field.value ? '' : 'text-gray-500 font-medium'}
-              placeholder='Pick-up Location'
-              options={[
-                { label: 'Airport 1', value: 'Airport 1' },
-                { label: 'Airport 2', value: 'Airport 2' },
-                { label: 'Airport 3', value: 'Airport 3' }
-              ]}
-            // onChange={e => setFormData(prev => ({ ...prev, pickUpLocation: e.target.value }))}
-            />
-          )}
-        />
-        <Controller
-          name='dropOffLocation'
-          control={control}
-          render={({ field }) => (
-            <CustomSelect
-              {...field}
-              className={field.value ? '' : 'text-gray-500 font-medium'}
-              placeholder='Drop-off Location'
-              options={[
-                { label: 'Hotel 1', value: 'Hotel 1' },
-                { label: 'Hotel 2', value: 'Hotel 2' },
-                { label: 'Hotel 3', value: 'Hotel 3' }
-              ]}
-            // onChange={e => setFormData(prev => ({ ...prev, pickUpLocation: e.target.value }))}
-            />
-          )}
-        />
+        <div className='col-span-full'>
+          <CustomSelect
+            label="Select Route"
+            placeholder='Select Route'
+            options={[{ label: 'Airport to Hotel', value: 'airport' }, { label: 'Hotel to Airport', value: 'hotel' }]}
+            value={fromAddress}
+            onChange={handleFromChange}
+          />
+        </div>
+        <div className={cn(fromAddress !== "airport" && 'flex items-center gap-2')}>
+          {(fromAddress !== "airport" && mapLocation) ?
+            <TextInput value={"Map Location"} isDisabled wrapperClass='flex-1' />
+            :
+            <Controller
+              name='pickUpLocation'
+              control={control}
+              render={({ field }) => (
+                <CustomSelect
+                  {...field}
+                  wrapperClass='flex-1'
+                  className={field.value ? '' : 'text-gray-500 font-medium'}
+                  placeholder='Pick-up Location'
+                  options={fromAddress === 'airport' ? airportOptions : hotelOptions}
+                // onChange={e => setFormData(prev => ({ ...prev, pickUpLocation: e.target.value }))}
+                />
+              )}
+            />}
+          {(fromAddress !== "airport") && (
+            !mapLocation ?
+              <MapOption
+                className="mt-1"
+                onSelectLocation={(location) => {
+                  setMapLocation(location)
+                  setValue("pickUpLocation", location)
+                }} />
+              :
+              <div className='cursor-pointer mt-1' onClick={() => {
+                setMapLocation()
+                setValue("pickUpLocation", null)
+              }}>
+                <FontAwesomeIcon icon={faClose} className='bg-white rounded-full p-3 ' />
+              </div>)
+          }
+        </div>
+        <div className={cn(fromAddress === "airport" && 'flex items-center gap-2')}>
+          {(fromAddress === "airport" && mapLocation) ?
+            <TextInput value={"Map Location"} isDisabled wrapperClass='flex-1' />
+            :
+            <Controller
+              name='dropOffLocation'
+              control={control}
+              render={({ field }) => (
+                <CustomSelect
+                  {...field}
+                  wrapperClass="flex-1"
+                  className={cn(field.value ? '' : 'text-gray-500 font-medium')}
+                  placeholder='Drop-off Location'
+                  options={fromAddress === 'hotel' ? airportOptions : hotelOptions}
+                // onChange={e => setFormData(prev => ({ ...prev, pickUpLocation: e.target.value }))}
+                />
+              )}
+            />}
+          {(fromAddress === "airport") && (!mapLocation ?
+            <MapOption
+              className="mt-1"
+              onSelectLocation={(location) => {
+                setMapLocation(location)
+                setValue("dropOffLocation", location)
+              }} />
+            :
+            <div className='cursor-pointer mt-1' onClick={() => {
+              setMapLocation()
+              setValue("dropOffLocation", null)
+            }}>
+              <FontAwesomeIcon icon={faClose} className='bg-white rounded-full p-3 ' />
+            </div>)
+          }
+        </div>
         <Controller
           name='pickupDate'
           control={control}

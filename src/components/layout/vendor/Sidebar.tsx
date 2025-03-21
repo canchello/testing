@@ -6,6 +6,7 @@ import { useHover } from 'react-use'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import DashboardIcon from '@/assets/svg/dashboardIcon.svg'
+import hotelIcon from '@/assets/svg/hotel.svg'
 import bookmarkIcon from '@/assets/svg/bookmark.svg'
 import RoomsIcon from '@/assets/svg/roomsIcon.svg'
 import MessagesIcon from '@/assets/svg/messagesIcon.svg'
@@ -17,11 +18,12 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 
 const routes = [
   { icon: DashboardIcon, label: 'Dashboard', href: '/vendor/dashboard' },
+  { icon: hotelIcon, label: 'Property', href: '/vendor/onboard' },
   { icon: bookmarkIcon, label: 'Reservations', href: '/vendor/reservations' },
   { icon: RoomsIcon, label: 'Rooms', href: '/vendor/rooms' },
   { icon: MessagesIcon, label: 'Messages', href: '/vendor/messages' },
   { icon: CalendarIcon, label: 'Calendar', href: '/vendor/calendar' },
-  { icon: PaymentsIcon, label: 'Payments', href: '/vendor/payments' },
+  // { icon: PaymentsIcon, label: 'Payments', href: '/vendor/payments' },
   { icon: ReviewsIcon, label: 'Reviews', href: '/vendor/reviews' }
 ]
 
@@ -55,7 +57,7 @@ const Sidebar = () => {
         </button>
 
         {/* Navigation Links */}
-        <nav className='mt-4 space-y-4 overflow-auto'>
+        <nav className='mt-4 pb-10 space-y-4 overflow-auto'>
           {routes.map(({ icon, label, href }) => (
             <NavItem
               key={label}
@@ -88,8 +90,12 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isExpanded, active, href
         active ? 'bg-marchent-primary text-[#15253B]' : 'hover:bg-marchent-primary hover:text-[#15253B] text-gray-300'
       } transition-colors`}
     >
-      <div className='w-6 h-6'>
-        <Image src={icon} className={`${active || hovered ? 'invert-1' : 'invert-0'}`} alt={`${label} icon`} />
+      <div className='w-6 h-6 min-w-6 flex justify-center items-center'>
+        <Image
+          src={icon}
+          className={`w-full h-full ${active || hovered ? 'invert-1' : 'invert-0'}`}
+          alt={`${label} icon`}
+        />
       </div>
       {isExpanded && <span className='ml-4'>{label}</span>}
     </Link>

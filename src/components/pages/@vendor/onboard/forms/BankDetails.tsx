@@ -3,7 +3,6 @@
 import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import CustomButton from '@/components/common/CustomButton'
-import userStore from '@/stores/userStore'
 import TextInput from '@/components/form/LabelInput'
 import CustomSelect from '@/components/form/SelectField'
 import CustomTextArea from '@/components/form/TextareaInput'
@@ -12,19 +11,30 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { toast } from 'sonner'
 import Modal from '@/components/UI/Modal'
 import MerchatDeclaration from '../MerchatDeclaration'
+import { bankDetailsURL, createBankDetailsURL } from '@/services/APIs/vendor'
+import Axios from '@/libs/axios'
+import { BANK_ACCOUNT_TYPES } from '@/libs/constants'
+import { useRouter } from 'next/navigation'
+import userStore from '@/stores/userStore'
+import { useMount } from 'react-use'
+import Loader from '@/components/common/Loader'
 
 interface FormData {
-  accountHolderName: string
+  holderName: string
   accountNumber: string
   accountType: string
   bankName: string
-  bankAddress: string
-  swiftCode: string
+  address: string
+  IFSC: string
 }
 
 const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
-  const { property = {} }: any = userStore()
+  const router = useRouter()
+  const { user, updateUserProfile }: any = userStore()
+  const [submitLoading, setSubmitLoading] = useState<Boolean>(false)
   const [formLoading, setFormLoading] = useState<Boolean>(false)
+
+  const { bankDetails = {} } = user
 
   const {
     control,
@@ -33,29 +43,51 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
     reset
   } = useForm<FormData>({
     defaultValues: {
-      accountHolderName: property.accountHolderName || '',
-      accountNumber: property.accountNumber || '',
-      accountType: property.accountType || '',
-      bankName: property.bankName || '',
-      bankAddress: property.bankAddress || '',
-      swiftCode: property.swiftCode || ''
+      holderName: bankDetails.holderName || '',
+      accountNumber: bankDetails.accountNumber || '',
+      accountType: bankDetails.accountType || BANK_ACCOUNT_TYPES.CURRENT,
+      bankName: bankDetails.bankName || '',
+      address: bankDetails.address || '',
+      IFSC: bankDetails.IFSC || ''
     }
   })
 
   const onSubmit = async (data: FormData) => {
-    setFormLoading(true)
     try {
-      // Mock submission
-      console.log('Bank Details Submitted:', data)
+      setSubmitLoading(true)
+      const { data: res }: any = await Axios({
+        ...createBankDetailsURL,
+        data
+      })
+      await updateUserProfile()
       toast.success('Bank details successfully submitted!')
-      setFormLoading(false)
-      onNext()
+      router.push('/vendor/dashboard')
     } catch (error) {
       console.error('Error submitting bank details:', error)
-      setFormLoading(false)
+    } finally {
+      setSubmitLoading(false)
     }
   }
 
+  useMount(async () => {
+    try {
+      setFormLoading(true)
+      // fetch rules
+      const { data: bankData }: any = await Axios({
+        ...bankDetailsURL,
+        data: { query: { propertyId: user?.primaryProperty?._id } }
+      })
+      reset(bankData?.data || null)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setFormLoading(false)
+    }
+  })
+
+  if (formLoading) {
+    return <Loader />
+  }
   return (
     <div className='container mx-auto'>
       <h2 className='text-2xl font-bold mb-2'>
@@ -68,7 +100,7 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           {/* Account Holder's Name */}
           <Controller
-            name='accountHolderName'
+            name='holderName'
             control={control}
             rules={{ required: "Account holder's name is required" }}
             render={({ field }) => (
@@ -76,7 +108,7 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
                 {...field}
                 label="Account Holder's Name"
                 placeholder="Enter Account Holder's Name"
-                error={errors?.accountHolderName?.message}
+                error={errors?.holderName?.message}
                 required
               />
             )}
@@ -108,8 +140,8 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
                 {...field}
                 label='Account Type'
                 options={[
-                  { label: 'Savings', value: 'savings' },
-                  { label: 'Current', value: 'current' }
+                  { label: 'Savings', value: BANK_ACCOUNT_TYPES.SAVING },
+                  { label: 'Current', value: BANK_ACCOUNT_TYPES.CURRENT }
                 ]}
                 // placeholder="Select Account Type"
                 error={errors?.accountType?.message}
@@ -137,7 +169,7 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
 
         {/* Bank Address */}
         <Controller
-          name='bankAddress'
+          name='address'
           control={control}
           rules={{ required: 'Bank address is required' }}
           render={({ field }) => (
@@ -145,7 +177,7 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
               {...field}
               label='Bank Address'
               placeholder='Enter Address'
-              error={errors?.bankAddress?.message}
+              error={errors?.address?.message}
               required
             />
           )}
@@ -153,7 +185,7 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
 
         {/* SWIFT Code */}
         <Controller
-          name='swiftCode'
+          name='IFSC'
           control={control}
           rules={{ required: 'SWIFT code is required' }}
           render={({ field }) => (
@@ -162,7 +194,7 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
               label='SWIFT Code'
               className='md:w-1/2'
               placeholder='Enter Code'
-              error={errors?.swiftCode?.message}
+              error={errors?.IFSC?.message}
               required
             />
           )}
@@ -182,7 +214,7 @@ const BankDetails = ({ onNext = () => {}, onPrev = () => {} }) => {
 
           <CustomButton
             type='submit'
-            isLoading={!!formLoading}
+            isLoading={!!submitLoading}
             title='Submit'
             variant='primary'
             className='mt-6 min-w-44'

@@ -10,7 +10,7 @@ const CarRental = () => {
 
   return (
     <div className='container mx-auto space-y-4'>
-      <div className='relative sm:mb-96'>
+      <div className='relative sm:mb-[480px]'>
         <Image src={carRentImg} alt='' className='w-full max-h-96 object-cover rounded-xl' />
         <div className='absolute top-0 h-full w-full p-4 sm:p-8 text-white bg-gradient-to-r from-[#15253B] to-transparent rounded-xl'>
           <div className='flex gap-2 flex-col justify-center h-full'>
@@ -20,7 +20,8 @@ const CarRental = () => {
             </span>
           </div>
         </div>
-        <div className='hidden sm:block absolute sm:mx-10 bg-custom-orange p-4 rounded-xl top-3/4 shadow-lg'>
+        <div className='hidden sm:block absolute sm:mx-10 bg-custom-orange p-4 rounded-xl top-3/4 shadow-lg w-[calc(100%-80px)]
+'>
           <BookForm />
         </div>
       </div>

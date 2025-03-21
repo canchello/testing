@@ -15,6 +15,7 @@ import { BOOKING_STATUS } from '@/libs/constants'
 import { useRouter } from 'next/navigation'
 import BookedCar from './BookedCar'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 export default function MyBookings() {
   const router = useRouter()
@@ -24,13 +25,14 @@ export default function MyBookings() {
     speed: 500,
     autoplay: false,
     slidesToShow: 2,
-    slidesToScroll: 1,
+    slidesToScroll: 2,
     centerMode: true,
     centerPadding: '0px',
     responsive: [
       {
         breakpoint: 1024,
         settings: {
+          slidesToScroll: 1,
           slidesToShow: 1
         }
       }
@@ -68,6 +70,7 @@ export default function MyBookings() {
           },
           options: {
             populate: 'rooms property',
+            sort: '-createdAt',
             lean: true
           }
         }
@@ -203,7 +206,11 @@ export default function MyBookings() {
           (bookingActions === 'Write a Review' ? (
             <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center'>
               <div className='bg-white rounded-lg overflow-auto h-screen p-4'>
-                <BookingReviewModal propertyId={showModal.propertyId} onClose={handleModalClose} />
+                <BookingReviewModal
+                  propertyId={showModal.propertyId}
+                  bookingId={showModal.bookingId}
+                  onClose={handleModalClose}
+                />
               </div>
             </div>
           ) : (

@@ -8,37 +8,28 @@ interface RadioOption {
 }
 
 interface CustomRadioProps {
+  name?: string
   label?: string
   options: RadioOption[]
   value: any
-  onChange: ((e: React.ChangeEvent<HTMLInputElement>) => void) | ((value: any) => void)
+  onChange: (value: any) => void
   error?: string
   required?: boolean
   disabled?: boolean
+  direction?: 'horizontal' | 'vertical'
 }
 
 const CustomRadio: React.FC<CustomRadioProps> = ({
+  name,
   label,
   options,
   value,
   onChange,
   error,
   required = false,
-  disabled = false
+  disabled = false,
+  direction = 'horizontal'
 }) => {
-  // Handle both ChangeEvent-based and value-based onChange
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, optionValue: any) => {
-    if (typeof onChange === 'function') {
-      if (onChange.length === 1) {
-        // If onChange expects only one argument (value)
-        ;(onChange as (value: any) => void)(optionValue)
-      } else {
-        // If onChange expects a ChangeEvent
-        ;(onChange as (e: React.ChangeEvent<HTMLInputElement>) => void)(e)
-      }
-    }
-  }
-
   return (
     <div className='flex flex-col gap-2 text-left'>
       {label && (
@@ -47,15 +38,15 @@ const CustomRadio: React.FC<CustomRadioProps> = ({
           {required && <span className='text-red-500'>*</span>}
         </label>
       )}
-      <div className='flex flex-wrap gap-4'>
+      <div className={`flex ${direction === 'vertical' ? 'flex-col' : 'flex-wrap'} gap-4`}>
         {options.map(option => (
           <label key={option.value} className='cursor-pointer flex items-center space-x-2'>
             <input
               type='radio'
-              name={label}
+              name={name}
               value={option.value}
               checked={value === option.value}
-              onChange={e => handleChange(e, option.value)}
+              onChange={() => onChange(option.value)}
               className='radio'
               disabled={disabled}
             />

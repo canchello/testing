@@ -15,6 +15,11 @@ export const forgotPasswordURL = {
   method: 'POST'
 }
 
+export const resendOTPURL = {
+  url: '/authentication/otp/send',
+  method: 'POST'
+}
+
 export const googleLoginURL = {
   url: '/authentication/google',
   method: 'GET'
@@ -67,6 +72,11 @@ export const changeUserPasswordURL = {
   method: 'POST'
 }
 
+export const getCityListURL = {
+  url: '/property/city/list',
+  method: 'POST'
+}
+
 export const getBookingListURL = {
   url: '/booking/list',
   method: 'POST'
@@ -79,6 +89,11 @@ export const cancelBookingURL = id => ({
 
 export const createReviewURL = {
   url: '/property/review/create',
+  method: 'POST'
+}
+
+export const amenitiesListURL = {
+  url: '/amenities/list',
   method: 'POST'
 }
 
@@ -100,3 +115,28 @@ export const requestTaxiURL = {
   url: '/taxi-booking/create',
   method: 'POST'
 }
+export const addCouponToWalletURL = {
+  url: '/wallet/add-coupon',
+  method: 'POST'
+}
+export const getWalletURL = {
+  url: '/wallet/',
+  method: 'GET'
+}
+export const checkCouponURL = {
+  url: '/coupon/apply',
+  method: 'POST'
+}
+export const airportListURL = {
+  url: '/airport/list',
+  method: 'POST'
+}
+
+export const notificationListURL = {
+  url: '/notification/list',
+  method: 'POST'
+}
+export const notificationDeleteURL = id => ({
+  url: `/notification/${id}`,
+  method: 'DELETE'
+})

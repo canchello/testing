@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import CustomButton from '@/components/common/CustomButton'
 import { faChevronLeft, faShare, faShareNodes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -15,9 +15,63 @@ import WalletBrown from '@/assets/images/wallet2.png'
 import MyCoupons from '@/components/pages/user/rewards-wallet/MyCoupon'
 import ReferAFriend from '@/components/pages/user/rewards-wallet/ReferAFriend'
 import Link from 'next/link'
+import { addCouponToWalletURL, getWalletURL } from '@/services/APIs/user'
+import Axios from '@/libs/axios'
+import TextInput from '@/components/form/LabelInput'
+import { toast } from 'sonner'
+import Loader from '@/components/common/Loader'
+
+interface Wallet {
+  amount: number
+  availableCoupon: any[]
+}
 
 export default function WallerRewards() {
   const [myBookings, setMyBookings] = useState([])
+  const [state, setState] = useState<{
+    addCoupon: boolean
+    coupon: string
+    loadingCoupon: boolean
+    loadingWallet: boolean
+    wallet: Wallet | null
+  }>({
+    addCoupon: false,
+    coupon: '',
+    loadingCoupon: false,
+    loadingWallet: false,
+    wallet: null
+  })
+
+  const walletDetails = async () => {
+    try {
+      setState(prev => ({ ...prev, loadingWallet: true }))
+      const { data }: any = await Axios({ ...getWalletURL })
+      setState(prev => ({ ...prev, wallet: data.data }))
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setState(prev => ({ ...prev, loadingWallet: false }))
+    }
+  }
+
+  useEffect(() => {
+    walletDetails()
+  }, [])
+
+  const addCoupon = async () => {
+    try {
+      setState(prev => ({ ...prev, loadingCoupon: true }))
+      const { data }: any = await Axios({ ...addCouponToWalletURL, data: { couponCode: state.coupon } })
+      toast.success(data.message)
+      walletDetails()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setState(prev => ({ ...prev, loadingCoupon: false, addCoupon: false, coupon: '' }))
+    }
+  }
+
+  if (state.loadingWallet) return <Loader />
 
   return (
     <div className='container mx-auto p-4 md:p-10 space-y-4'>
@@ -45,17 +99,33 @@ export default function WallerRewards() {
           <span className='text-gray-400'>Includes all spendable rewards</span>
           <div className='flex items-center my-4 gap-4'>
             <Image src={WalletImg} alt='' className='h-16 w-16' />
-            <h1 className='text-4xl font-bold'>$120/-</h1>
+            <h1 className='text-4xl font-bold'>${state.wallet?.amount || 0}/-</h1>
           </div>
-          <span className='space-x-2 text-lg'>
-            <span>Got a coupon code?</span>
-            <span className='text-primary'>Add coupon into wallet</span>
-          </span>
+          {state.addCoupon ? (
+            <div className='flex gap-2 space-x-2 text-lg'>
+              <TextInput
+                placeholder='Enter Coupon Code'
+                value={state.coupon}
+                onChange={e => setState(prev => ({ ...prev, coupon: e.target.value }))}
+              />
+              <CustomButton title='Add Coupon' onClick={addCoupon} isLoading={state.loadingCoupon} />
+            </div>
+          ) : (
+            <span className='space-x-2 text-lg'>
+              <span>Got a coupon code?</span>
+              <span
+                className='text-primary cursor-pointer text-link'
+                onClick={() => setState({ ...state, addCoupon: true })}
+              >
+                Add coupon into wallet
+              </span>
+            </span>
+          )}
         </div>
         <CustomButton className='!p-0' variant='default' title='Refer to a friend' />
         <ReferAFriend />
       </div>
-      <MyCoupons />
+      <MyCoupons coupons={state.wallet?.availableCoupon || []} />
       <div>
         <p className='text-center'>
           Every time you make a booking or engage with our services, you earn points that can be redeemed for discounts,

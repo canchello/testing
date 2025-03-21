@@ -6,6 +6,7 @@ import TextField from '@/components/form/TextField'
 import Axios from '@/libs/axios'
 import { changeUserPasswordURL, logoutFromAllDevicesURL } from '@/services/APIs/user'
 import { toast } from 'sonner'
+import userStore from '@/stores/userStore'
 
 interface FormData {
   password: string
@@ -14,6 +15,7 @@ interface FormData {
 }
 
 const Security = () => {
+  const { user }: any = userStore()
   const [isLoading, setLoading] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
 
@@ -21,6 +23,7 @@ const Security = () => {
     control,
     handleSubmit,
     formState: { errors },
+    reset,
     watch
   } = useForm<FormData>({
     defaultValues: {
@@ -30,20 +33,17 @@ const Security = () => {
     }
   })
 
-  const changeUserPassword = async (data: any) => {
+  const onSubmit = async (data: any) => {
     setLoading(true)
     try {
       const response: any = await Axios({ ...changeUserPasswordURL, data: data })
       toast.success('Password successfully changed!')
-      setLoading(false)
+      reset()
     } catch (error) {
       console.log('error', error)
+    } finally {
       setLoading(false)
     }
-  }
-
-  const onSubmit = (data: any) => {
-    changeUserPassword(data)
   }
 
   const signOutFromAllDevices = async () => {
@@ -58,6 +58,8 @@ const Security = () => {
     }
   }
 
+  const deleteMyAccount = async () => {}
+
   return (
     <div className='container mx-auto'>
       <h2 className='text-2xl font-bold mb-2'>Security</h2>
@@ -66,88 +68,91 @@ const Security = () => {
         protection.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-4'>
-        <h2 className='text-xl font-bold mb-2'>Reset Password</h2>
+      {!user?.authProvider?.includes('google') && (
+        <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-4'>
+          <h2 className='text-xl font-bold mb-2'>Reset Password</h2>
 
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-          <Controller
-            name='password'
-            control={control}
-            rules={{ required: 'Old Password is required' }}
-            render={({ field }) => (
-              <div className='flex flex-col gap-2'>
-                <label className='text-base font-semibold'>
-                  Enter Current Password
-                  <span className='text-error'>*</span>
-                </label>
-                <TextField
-                  {...field}
-                  type='password'
-                  placeholder='Enter Current Password'
-                  className='border-gray-400'
-                  isDisabled={isLoading}
-                  error={errors.password?.message}
-                />
-              </div>
-            )}
-          />
-          <Controller
-            name='newPassword'
-            control={control}
-            rules={{ required: 'Password is required' }}
-            render={({ field }) => (
-              <div className='flex flex-col gap-2'>
-                <label className='text-base font-semibold'>
-                  Enter new Password
-                  <span className='text-error'>*</span>
-                </label>
-                <TextField
-                  {...field}
-                  type='password'
-                  placeholder='Enter New Password'
-                  className='border-gray-400'
-                  isDisabled={isLoading}
-                  error={errors.newPassword?.message}
-                />
-              </div>
-            )}
-          />
-          <Controller
-            name='confirmPassword'
-            control={control}
-            rules={{
-              required: 'Confirm Password is required',
-              validate: value => value === watch('newPassword') || 'Passwords do not match'
-            }}
-            render={({ field }) => (
-              <div className='flex flex-col gap-2'>
-                <label className='text-base font-semibold'>
-                  Confirm new Password
-                  <span className='text-error'>*</span>
-                </label>
-                <TextField
-                  {...field}
-                  type='password'
-                  placeholder='Confirm new Password'
-                  className='border-gray-400'
-                  isDisabled={isLoading}
-                  error={errors.confirmPassword?.message}
-                />
-              </div>
-            )}
-          />
-        </div>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+            <Controller
+              name='password'
+              control={control}
+              rules={{ required: 'Current Password is required' }}
+              render={({ field }) => (
+                <div className='flex flex-col gap-2'>
+                  <label className='text-base font-semibold'>
+                    Enter Current Password
+                    <span className='text-error'>*</span>
+                  </label>
+                  <TextField
+                    {...field}
+                    type='password'
+                    placeholder='Enter Current Password'
+                    className='border-gray-400'
+                    isDisabled={isLoading}
+                    error={errors.password?.message}
+                  />
+                </div>
+              )}
+            />
+            <div />
+            <Controller
+              name='newPassword'
+              control={control}
+              rules={{ required: 'New Password is required' }}
+              render={({ field }) => (
+                <div className='flex flex-col gap-2'>
+                  <label className='text-base font-semibold'>
+                    Enter new Password
+                    <span className='text-error'>*</span>
+                  </label>
+                  <TextField
+                    {...field}
+                    type='password'
+                    placeholder='Enter New Password'
+                    className='border-gray-400'
+                    isDisabled={isLoading}
+                    error={errors.newPassword?.message}
+                  />
+                </div>
+              )}
+            />
+            <Controller
+              name='confirmPassword'
+              control={control}
+              rules={{
+                required: 'Confirm Password is required',
+                validate: value => value === watch('newPassword') || 'Passwords do not match'
+              }}
+              render={({ field }) => (
+                <div className='flex flex-col gap-2'>
+                  <label className='text-base font-semibold'>
+                    Confirm new Password
+                    <span className='text-error'>*</span>
+                  </label>
+                  <TextField
+                    {...field}
+                    type='password'
+                    placeholder='Confirm new Password'
+                    className='border-gray-400'
+                    isDisabled={isLoading}
+                    error={errors.confirmPassword?.message}
+                  />
+                </div>
+              )}
+            />
+          </div>
 
-        <div>
-          <CustomButton
-            isLoading={isLoading}
-            type='submit'
-            title='Save Password'
-            variant='primary'
-            className='mt-3 min-w-44 w-full md:w-auto'
-          />
-        </div>
-      </form>
+          <div>
+            <CustomButton
+              isLoading={isLoading}
+              type='submit'
+              title='Save Password'
+              variant='primary'
+              className='mt-3 min-w-44 w-full md:w-auto'
+            />
+          </div>
+        </form>
+      )}
 
       <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 my-8'>
         <p>Sign out from all the devices except this one. This process will take approx. 10 minutes.</p>
@@ -161,7 +166,12 @@ const Security = () => {
       </div>
       <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 my-8'>
         <p>Permanently delete your Booking.com account?</p>
-        <CustomButton title='Delete Account' variant='error' className='min-w-40 self-end md:self-auto ' />
+        <CustomButton
+          title='Delete Account'
+          variant='error'
+          className='min-w-40 self-end md:self-auto '
+          onClick={deleteMyAccount}
+        />
       </div>
     </div>
   )

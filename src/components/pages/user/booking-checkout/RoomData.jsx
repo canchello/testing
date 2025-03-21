@@ -1,11 +1,14 @@
 import CustomButton from '@/components/common/CustomButton';
 import hotelStore from '@/stores/hotelStore';
+import { getImage } from '@/utils/helper';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dayjs from 'dayjs';
 import React, { useMemo, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-export default function RoomData({ room, isDisableControls = false }) {
+const maxFacilities = 2;
+
+export default function RoomData({ room, selectedRooms: bookingRooms = [], isDisableControls = false }) {
   const { hotelFilters, setSelectedRooms, selectedRooms } = hotelStore();
   const { nightCount, totalPrice, totalGuest } = useMemo(() => {
     const daysDiff = dayjs(hotelFilters.checkOut).diff(dayjs(hotelFilters.checkIn), 'days');
@@ -13,7 +16,6 @@ export default function RoomData({ room, isDisableControls = false }) {
     const totalGuest = Number(hotelFilters.adults || 0) + Number(hotelFilters.children || 0);
     return { nightCount: daysDiff, totalPrice, totalGuest };
   }, [hotelFilters.checkIn, hotelFilters.checkOut, hotelFilters.adults, hotelFilters.children]);
-
 
   const handleIncrement = (id) => {
     // Find the current room in the selectedRooms state
@@ -43,6 +45,9 @@ export default function RoomData({ room, isDisableControls = false }) {
   };
 
   const getRoomCount = (id) => {
+    if (!!bookingRooms?.length) {
+      return bookingRooms.length
+    }
     const room = selectedRooms?.find((room) => room.id === id);
     return room ? room.count : 0;
   };
@@ -68,7 +73,7 @@ export default function RoomData({ room, isDisableControls = false }) {
     <div className="flex flex-col md:flex-row items-center bg-white shadow-lg rounded-lg">
       <div className="w-full md:w-1/3">
         <img
-          src="https://res.cloudinary.com/dndsypilw/image/upload/v1730369796/hfvz03ujeezwcth7nboo.jpg"
+          src={room?.attachment ? getImage(room.attachment.fileUrl) : "https://via.placeholder.com/150"}
           alt="Hotel Room"
           className="h-60 rounded-lg w-full object-cover"
         />
@@ -85,9 +90,8 @@ export default function RoomData({ room, isDisableControls = false }) {
             <span className="font-medium">{totalGuest || 0} Guests</span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {/* Display room facilities */}
-            {room?.facility?.slice(0, 2).map((item, index) => (
+          {/* <div className="flex flex-wrap gap-2">
+            {room?.amenities?.slice(0, 2).map((item, index) => (
               <div
                 key={index}
                 className="flex items-center gap-3 bg-gray-300 py-2 px-4 rounded-full"
@@ -96,18 +100,24 @@ export default function RoomData({ room, isDisableControls = false }) {
                 <p>{item.title}</p>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
 
         <div className="flex flex-col justify-between items-end gap-4">
           <div>
-            <div className="flex flex-wrap gap-2 justify-end">
-              <div className="border border-primary rounded-full px-4 py-1">
-                <span className="text-primary">Free Cancellation</span>
-              </div>
-              <div className="border border-primary rounded-full px-4 py-1">
-                <span className="text-primary">Breakfast Included</span>
-              </div>
+            <div className="flex flex-wrap gap-2 justify-end items-center">
+              {room?.amenities?.slice(0, maxFacilities).map((item, index) => (
+                <div key={index} className="border border-primary text-primary rounded-full px-2 py-1">
+                  <FontAwesomeIcon icon={item.icon} />
+                  <p>{item.title}</p>
+                </div>
+              ))}
+              {room?.amenities?.length > maxFacilities &&
+                <div class="tooltip tooltip-bottom" data-tip={room?.amenities?.map((facility) => facility.title).join(', ')}>
+                  <span className='border border-primary rounded-full text-primary px-2 py-1' >
+                    +{room?.amenities.length - maxFacilities} Amenities
+                  </span>
+                </div>}
             </div>
           </div>
 
@@ -117,7 +127,7 @@ export default function RoomData({ room, isDisableControls = false }) {
           {
             isDisableControls ? <div className="flex items-center space-x-2">
               <span className="text-lg font-medium px-4 py-2">
-                Selected {getRoomCount(room._id) > 1 ? "rooms" : "room"} {getRoomCount(room._id)}
+                Selected {getRoomCount(room._id)} {getRoomCount(room._id) > 1 ? "rooms" : "room"}
               </span>
             </div> :
               <div className="flex items-center space-x-2">

@@ -5,8 +5,10 @@ import dayjs from 'dayjs';
 import React, { useMemo, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
+const maxFacilities = 2;
+
 export default function RoomData({ room }) {
-  const { hotelFilters,setSelectedRooms,selectedRooms } = hotelStore();
+  const { hotelFilters, setSelectedRooms, selectedRooms } = hotelStore();
   const { nightCount, totalPrice, totalGuest } = useMemo(() => {
     const daysDiff = dayjs(hotelFilters.checkOut).diff(dayjs(hotelFilters.checkIn), 'days');
     const totalPrice = (room?.price || 0) * (daysDiff > 0 ? daysDiff : 1);
@@ -19,7 +21,7 @@ export default function RoomData({ room }) {
     // Find the current room in the selectedRooms state
     const currentRoom = selectedRooms.find((room) => room.id === id);
     const currentCount = currentRoom ? currentRoom.count : 0;
-  
+
     // Check if the current count exceeds the available rooms
     if (currentCount < room.room.length) {
       // If the room already exists, increment its count
@@ -45,7 +47,7 @@ export default function RoomData({ room }) {
   };
   const handleDecrement = (id) => {
     const currentRoom = selectedRooms.find((room) => room.id === id);
-  
+
     if (currentRoom) {
       if (currentRoom.count > 1) {
         // Decrement the count if it's greater than 1
@@ -60,7 +62,7 @@ export default function RoomData({ room }) {
       }
     }
   };
-  
+
   return (
     <div className="flex flex-col md:flex-row items-center bg-white shadow-lg rounded-lg">
       <div className="w-full md:w-1/3">
@@ -82,22 +84,22 @@ export default function RoomData({ room }) {
             <span className="font-medium">{totalGuest} Guests</span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {/* Display room facilities */}
-            {room?.facility?.slice(0, 2).map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 bg-gray-300 py-2 px-4 rounded-full"
-              >
-                <FontAwesomeIcon icon={item.icon} />
-                <p>{item.title}</p>
-              </div>
-            ))}
-          </div>
+          {room.facility &&
+            <div className='flex flex-wrap gap-2'>
+              {room.facility?.slice(0, maxFacilities)?.map((facility) => (
+                <span className='border border-primary rounded-full text-primary px-2 py-1'>
+                  {facility.title}
+                </span>
+              ))}
+              {room.facility?.length > maxFacilities &&
+                <span className='border border-primary rounded-full text-primary px-2 py-1'>
+                  +{room.facility.length - maxFacilities} Facility
+                </span>}
+            </div>}
         </div>
 
         <div className="flex flex-col justify-between items-end gap-4">
-          <div>
+          {/* <div>
             <div className="flex flex-wrap gap-2 justify-end">
               <div className="border border-primary rounded-full px-4 py-1">
                 <span className="text-primary">Free Cancellation</span>
@@ -106,7 +108,7 @@ export default function RoomData({ room }) {
                 <span className="text-primary">Breakfast Included</span>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="text-right">
             <div className="text-xl font-semibold">${room.price}</div>

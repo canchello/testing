@@ -32,8 +32,8 @@ const VerifyEmailForm = () => {
   const inputRefs = useRef<HTMLInputElement[]>([])
 
   useEffect(() => {
-    const email = searchParams.get('email') || ''
-    if (!email) return router.push('/login')
+    const userId = searchParams.get('id') || ''
+    if (!userId) return router.push('/login')
 
     let interval: NodeJS.Timeout
     if (isResendDisabled && timer > 0) {
@@ -52,11 +52,11 @@ const VerifyEmailForm = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const email = searchParams.get('email') || ''
+      const userId = searchParams.get('id') || ''
       setIsLoading(true)
       const otp = data.otp.join('')
       const payload = {
-        email: email,
+        userId,
         otp: Number(otp)
       }
       const { data: res }: any = await Axios({ ...verifyOTP_URL, data: payload })

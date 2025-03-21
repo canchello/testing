@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Controller, useForm, FieldValues } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import googleIcon from '@/assets/svg/googleIcon.svg'
 import TextField from '@/components/form/TextField'
 import CustomCheckbox from '@/components/form/CheckBox'
@@ -12,6 +12,10 @@ import { loginURL } from '@/services/APIs/user'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Cookies from 'js-cookie'
+import LOCAL_STORAGE_CONSTANTS from '@/constants/localstorage'
+import { useMount } from 'react-use'
+import { getSubdomain, routeToUserDomain } from '@/utils/helper'
+import { USER_ROLES } from '@/libs/constants'
 
 interface FormData {
   email: string
@@ -22,8 +26,7 @@ interface FormData {
 const LoginForm = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const token = searchParams.get('token') || ''
-  const { setUser, fetchUserProfile }: any = userStore()
+  const { setUser, fetchUserProfile, getProfileMe }: any = userStore()
   const [isLoading, setLoading] = useState(false)
 
   const {
@@ -36,15 +39,26 @@ const LoginForm = () => {
     try {
       setLoading(true)
       const { data: res }: any = await Axios({ ...loginURL, data })
+      const subdomain = getSubdomain()
+      if (
+        res.status === 1 &&
+        ((res.data?.role === USER_ROLES.USER && subdomain) ||
+          (res.data?.role === USER_ROLES.VENDOR && subdomain !== 'vendor'))
+      ) {
+        return toast.error(
+          `You're registered as ${res.data?.role}, Please make sure to login thorugh ${res.data?.role} portal`
+        )
+      }
       if (res.status === 1) {
         setUser(res.data)
+        await fetchUserProfile(localStorage.getItem(LOCAL_STORAGE_CONSTANTS.AUTH_TOKEN))
         toast.success(`Welcome! ${res.data.firstName || res.data.email}` || `Welcome! You've logged In.`)
         Cookies.set('token', res.data.token, {})
+        routeToUserDomain()
         router.push('/')
       } else if (res.status === 2) {
-        setUser({ email: data.email })
         toast.success(res.message)
-        router.push('/vendor/verify-email')
+        router.push(`/vendor/verify-email?id=${res.data?._id || ''}`)
       }
     } catch (error) {
       console.error(error)
@@ -53,13 +67,22 @@ const LoginForm = () => {
     }
   }
 
-  useEffect(() => {
+  useMount(async () => {
+    const token = searchParams.get('token') || ''
     if (token) {
-      fetchUserProfile(token, () => {
-        router.push('/')
-      })
+      localStorage.setItem(LOCAL_STORAGE_CONSTANTS.AUTH_TOKEN, token)
+      getProfileMe()
+      // fetchUserProfile(token).then(() => {
+      //   router.push('/')
+      // })
     }
-  }, [token])
+    setTimeout(() => {
+      const error = searchParams.get('error') || ''
+      if (error) {
+        toast.error(error.replace(/_/g, ' '))
+      }
+    }, 500)
+  })
 
   const onGoogleClick = async () => {
     window.location.href = `${process.env.NEXT_PUBLIC_ENDPOINT}/authentication/google`

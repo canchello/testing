@@ -23,6 +23,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'via.placeholder.com',
         pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**'
       }
     ]
   }

@@ -91,6 +91,7 @@ const PassportForm: React.FC<PassportFormProps> = ({ control, errors, fieldPrefi
                 {...field}
                 label='Issuing Country'
                 options={[
+                  { label: 'Libya', value: 'libya' },
                   { label: 'India', value: 'india' },
                   { label: 'USA', value: 'usa' }
                 ]}

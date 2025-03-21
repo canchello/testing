@@ -9,7 +9,7 @@ import TextInput from '@/components/form/LabelInput';
 import CustomSelect from '@/components/form/SelectField';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/libs/constants';
-import { createRaiseTicketURL, deletRaiseTicketURL } from '@/services/APIs/customerSupport';
+import { createRaiseTicketURL, deletRaiseTicketURL, updateRaiseTicketURL } from '@/services/APIs/customerSupport';
 import Axios from '@/libs/axios';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
@@ -19,7 +19,7 @@ export default function RaiseTicketComponent({
   mode = 'add', // Can be "add" or "edit"
 }) {
   const router = useRouter();
-  const [isLoading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const {
     control,
@@ -40,6 +40,7 @@ export default function RaiseTicketComponent({
 
   const createRaiseTicket = async (data) => {
     try {
+      setLoading(true)
       const { data: res } = await Axios({ ...createRaiseTicketURL, data: data })
       if (res) {
         toast.success('Issue Raised Successfully!')
@@ -47,8 +48,26 @@ export default function RaiseTicketComponent({
       }
     } catch (error) {
       console.log('error', error)
+    } finally {
+      setLoading(false)
     }
   }
+
+  const updateRaisedTicket = async (data) => {
+    try {
+      setLoading(true)
+      const { data: res } = await Axios({ ...updateRaiseTicketURL(ticketDetails._id), data: data })
+      if (res) {
+        toast.success('Issue Updated Successfully!')
+        router.push(ROUTES.CUSTOMER_SUPPORT)
+      }
+    } catch (error) {
+      console.log('error', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const deleteRaiseTicket = async () => {
     try {
       const response = await Axios({ ...deletRaiseTicketURL(ticketDetails._id) })
@@ -62,6 +81,9 @@ export default function RaiseTicketComponent({
   const onSubmit = (data) => {
     if (mode === "add") {
       createRaiseTicket(data)
+    }
+    else if (mode === "edit") {
+      updateRaisedTicket(data)
     }
     // Handle submission logic
   };
@@ -77,6 +99,18 @@ export default function RaiseTicketComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, ticketDetails]);
 
+  const markAsOpen = async () => {
+    try {
+      setLoading(true)
+      const response = await Axios({ ...updateRaiseTicketURL(ticketDetails._id), data: { status: "open" } })
+      toast.success("Issue marked as open successfully!")
+      onCancelClick();
+    } catch (error) {
+      console.log('error', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="p-4 md:p-10 space-y-4">
@@ -102,12 +136,13 @@ export default function RaiseTicketComponent({
           <div className="text-gray-600 flex flex-col sm:flex-row justify-between items-start gap-2">
             <p>
               <strong>Issue Registered On: </strong>
-              {ticketDetails?.createdAt ? dayjs(new Date(ticketDetails?.createdAt)).format("YYYY-MM-DD") : 'N/A'}
+              {ticketDetails?.createdAt ? dayjs(new Date(ticketDetails?.createdAt)).format("MM-DD-YYYY") : 'N/A'}
             </p>
-            <p>
-              <strong>Issue Resolved On: </strong>
-              {ticketDetails?.resolvedOn ?? 'N/A'}
-            </p>
+            {ticketDetails?.resolvedOn &&
+              <p>
+                <strong>Issue Resolved On: </strong>
+                {ticketDetails?.resolvedOn}
+              </p>}
             <span
               className={`px-4 py-2 capitalize rounded-full text-sm font-medium ${ticketDetails?.status === 'closed' ? 'bg-[#0FA35C] text-[#FFFFFF]' : 'bg-yellow-200 text-yellow-800'
                 }`}
@@ -194,15 +229,15 @@ export default function RaiseTicketComponent({
           {mode === 'edit' ? (
             <>
               {ticketDetails?.status === "close" ?
-                <CustomButton title="Open Issue" variant="primary" />
+                <CustomButton title="Open Issue" variant="primary" isLoading={loading} onClick={markAsOpen} />
                 :
-                <CustomButton title="Update Issue" variant="primary" />
+                <CustomButton title="Update Issue" variant="primary" type="submit" isLoading={loading} />
               }
-              <CustomButton title="Delete Issue" variant="danger" onClick={deleteRaiseTicket} />
+              <CustomButton title="Delete Issue" variant="danger" onClick={deleteRaiseTicket} isLoading={loading} />
             </>
           ) : (
             <>
-              <CustomButton type="submit" title="Raise Issue" variant="primary" className="mt-6" />
+              <CustomButton type="submit" title="Raise Issue" variant="primary" className="mt-6" isLoading={loading} />
               <CustomButton type="button" onClick={onCancelClick} title="Cancel" variant="default" className="mt-6" />
             </>
           )}

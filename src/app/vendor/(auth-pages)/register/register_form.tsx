@@ -11,12 +11,14 @@ import { useRouter } from 'next/navigation'
 import Axios from '@/libs/axios'
 import { registerURL } from '@/services/APIs/user'
 import { toast } from 'sonner'
+import { USER_ROLES } from '@/libs/constants'
 
 interface FormData {
   email: string
   password: string
   confirmPassword: string
   agree: boolean
+  role: string
 }
 
 const RegisterForm = () => {
@@ -34,7 +36,8 @@ const RegisterForm = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      agree: false
+      agree: false,
+      role: USER_ROLES.VENDOR
     }
   })
 
@@ -48,12 +51,7 @@ const RegisterForm = () => {
       const { data: res }: any = await Axios({ ...registerURL, data })
       if (res.status === 1) {
         toast.success(res.message || 'User Registered successfully')
-        setUser(res.data)
-        // const { confirmPassword, ...loginData } = data
-        // const { data: loginRes } : any = await Axios({ ...loginURL, data: loginData })
-        router.push('/verify-email')
-        // return
-        // router.push('/login')
+        router.push(`/vendor/verify-email?id=${res.data?._id || ''}`)
       }
     } catch (error) {
       console.error(error)

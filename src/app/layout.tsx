@@ -1,15 +1,17 @@
 'use client'
-import type { Metadata } from 'next'
 import './globals.css'
 import 'react-perfect-scrollbar/dist/css/styles.css'
 
 import 'slick-carousel/slick/slick.css'
 import 'slick-carousel/slick/slick-theme.css'
 
+import '@/utils/i18n' // Import i18n configuration
+
 import { Proza_Libre } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import LOCAL_STORAGE_CONSTANTS from '@/constants/localstorage'
+// import { requestPermission, onMessageListener } from '@/firebase/notifications'
 
 // export const metadata: Metadata = {
 //   title: 'Booking app',
@@ -26,16 +28,24 @@ import userStore from '@/stores/userStore'
 import appStore from '@/stores/appStore'
 import Loader from '@/components/common/Loader'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
-import { usePathname } from 'next/navigation'
+import { redirect, usePathname, useRouter } from 'next/navigation'
+import { getSubdomain } from '@/utils/helper'
+import Script from 'next/script'
+import { useTranslation } from 'react-i18next'
+
 config.autoAddCss = false
+const GTM_ID = 'GTM-MXTQHVZQ' // Your GTM ID
 
 export default function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const router = useRouter()
+  const { i18n } = useTranslation()
+
   const { subscribedModal, setSubscribedModal, locationCords, setLocation }: any = appStore()
-  const { user, fetchUserProfile, fetchingUser }: any = userStore()
+  const { user, fetchUserProfile, fetchingUser, profileMeget }: any = userStore()
   const [loading, setLoading] = useState(true) // Loading state
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const pathname = usePathname()
@@ -44,15 +54,37 @@ export default function RootLayout({
     ;(async () => {
       const token = localStorage.getItem(LOCAL_STORAGE_CONSTANTS.AUTH_TOKEN)
       if (token && !user) {
+        setLoading(true)
         try {
-          await fetchUserProfile(token)
+          await fetchUserProfile(token, () => {
+            if (pathname.includes('login')) router.push('/')
+          })
         } catch (error) {
           console.error('Failed to fetch user profile:', error)
+          router.push('/')
         }
       }
       setLoading(false) // Set loading to false after fetching data
     })()
-  }, [])
+  }, [profileMeget])
+
+  useEffect(() => {
+    const subDomain = getSubdomain()
+    if (subDomain === 'vendor') {
+      if (!pathname.startsWith('/vendor')) return redirect(`/${subDomain}${pathname}`)
+      // if (!user) return redirect(ROUTES.VENDOR.LOGIN)
+      return
+    } else if (subDomain === 'admin') {
+      if (!pathname.startsWith('/admin')) return redirect(`/${subDomain}${pathname}`)
+      return
+    } else {
+      if (pathname.startsWith('/vendor') || pathname.startsWith('/admin')) return redirect(`/`)
+    }
+    // if (!user?.role) return
+    // else if (user.role) {
+    //   routeByRoleSubdomain({ user, subDomain })
+    // }
+  }, [user?.role, pathname])
 
   useEffect(() => {
     if (user && !locationCords) {
@@ -72,12 +104,60 @@ export default function RootLayout({
     }
   }, [pathname])
 
+  // Firebase Service Worker
+  // useEffect(() => {
+  //   if ('serviceWorker' in navigator) {
+  //     navigator.serviceWorker
+  //       .register('/firebase-messaging-sw.js')
+  //       .then(registration => {
+  //         console.log('Service Worker registered:', registration)
+  //       })
+  //       .catch(error => console.error('Service Worker registration failed:', error))
+  //   }
+
+  //   requestPermission()
+  //   onMessageListener().then(payload => {
+  //     console.log('Received foreground message:', payload)
+  //   })
+  // }, [])
+
   return (
-    <html lang='en'>
+    <html lang={i18n.language || 'en'} dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <head>
         <title>Canchello | Booking</title>
+        {/* Google Tag Manager - Head */}
+        <Script
+          id='gtm-head'
+          strategy='afterInteractive'
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','${GTM_ID}');
+            `
+          }}
+        />
+
+        <link
+          rel='stylesheet'
+          href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+          integrity='sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
+          crossOrigin=''
+        />
       </head>
       <body className={`${proza_libre.className} antialiased`}>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height='0'
+            width='0'
+            style={{ display: 'none', visibility: 'hidden' }}
+          ></iframe>
+        </noscript>
+
         <div ref={bodyRef} className='h-screen overflow-auto'>
           <ErrorBoundary>
             {loading || fetchingUser || (!user && localStorage.getItem(LOCAL_STORAGE_CONSTANTS.AUTH_TOKEN)) ? (

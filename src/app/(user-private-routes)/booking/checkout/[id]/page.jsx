@@ -8,35 +8,37 @@ import CustomButton from '@/components/common/CustomButton'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons'
 import Axios from '@/libs/axios'
-import { getHotelListURL } from '@/services/APIs/hotel'
+import { getRoomTypeListURL } from '@/services/APIs/hotel'
 import { useParams } from 'next/navigation'
 import hotelStore from '@/stores/hotelStore'
+import Loader from '@/components/common/Loader'
+import { useUnmount } from 'react-use'
 
 const BookingCheckout = () => {
   const params = useParams()
-  const { hotelFilters } = hotelStore()
+  const { hotelFilters, setSelectedRooms } = hotelStore()
   const { setUser } = userStore()
-  const [propertyData, setPropertyData] = useState({})
+  const [propertyData, setPropertyData] = useState([])
   const [isLoading, setLoading] = useState(false)
 
-  const fetchHotelDetails = async () => {
+  const fetchRoomDetails = async () => {
     try {
       setLoading(true)
       const { data } = await Axios({
-        ...getHotelListURL,
+        ...getRoomTypeListURL,
         data: {
           query: {
-            _id: params.id,
+            propertyId: params.id,
             checkIn: hotelFilters.checkIn,
             checkOut: hotelFilters.checkOut
           },
           options: {
-            populate: ['facility', 'rules', "attachment", "roomType"],
+            populate: ["attachment", "amenities"],
             lean: true
           }
         }
       })
-      setPropertyData(data.data.data?.find(i => i._id === params.id))
+      setPropertyData(data.data.data)
     } catch (error) {
       console.error(error)
     } finally {
@@ -44,16 +46,20 @@ const BookingCheckout = () => {
     }
   }
 
+  useUnmount(() => {
+    setSelectedRooms([])
+  })
+
   useEffect(() => {
-    fetchHotelDetails()
+    fetchRoomDetails()
   }, [])
 
   return (
     <div className='container mx-auto p-4'>
       <div className='flex flex-col lg:flex-row gap-4'>
-        <BookValues propertyData={propertyData} />
+        <BookValues propertyData={{ roomType: propertyData }} />
         <div className='flex-1 space-y-4 lg:w-[calc(100vw_-288px)]'>
-          <Link href='/booking'>
+          <Link href={`/stays/${params.id}`}>
             <CustomButton
               title='Back to Hotel'
               variant='default'
@@ -67,8 +73,10 @@ const BookingCheckout = () => {
               iconPosition='left'
             />
           </Link>
-
-          <RoomDetails rooms={propertyData.roomType} />
+          {
+            isLoading ? <Loader /> :
+              propertyData && <RoomDetails rooms={propertyData} />
+          }
         </div>
       </div>
     </div>

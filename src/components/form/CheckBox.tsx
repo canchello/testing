@@ -11,6 +11,7 @@ interface CheckboxProps {
   isDisabled?: boolean
   className?: string
   labelClassName?: string
+  labelClass?: string
 }
 
 const CustomCheckbox: React.FC<CheckboxProps> = ({
@@ -18,6 +19,7 @@ const CustomCheckbox: React.FC<CheckboxProps> = ({
   checked = false,
   onChange = () => {},
   labelClassName = '',
+  labelClass = '',
   className = '',
   error,
   isDisabled = false
@@ -32,7 +34,7 @@ const CustomCheckbox: React.FC<CheckboxProps> = ({
 
   return (
     <div className={cn(className)}>
-      <label className='label cursor-pointer justify-normal gap-4'>
+      <label className={cn('label cursor-pointer justify-normal gap-4', labelClass)}>
         <input
           type='checkbox'
           checked={checked}

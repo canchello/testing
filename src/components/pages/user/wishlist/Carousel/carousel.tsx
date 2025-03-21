@@ -54,7 +54,7 @@ const WishlistCarousel = ({ propertyDetails }: any) => {
       return (
         <Slider {...settings}>
           {propertyDetails?.map((hotel: any) => (
-            <div key={hotel._id} className="px-4">
+            <div key={hotel._id} className='px-4'>
               <HotelCard hotel={hotel} />
             </div>
           ))}
@@ -62,7 +62,7 @@ const WishlistCarousel = ({ propertyDetails }: any) => {
       )
     } else {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-4">
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4 px-4'>
           {propertyDetails?.map((hotel: any) => (
             <HotelCard key={hotel._id} hotel={hotel} />
           ))}
@@ -72,13 +72,13 @@ const WishlistCarousel = ({ propertyDetails }: any) => {
   }
 
   return (
-    <div className="w-full">
+    <div className='w-full'>
       {propertyDetails?.length > 0 ? (
         renderContent()
       ) : (
-        <div className="text-center py-8">
-          <h2 className="text-xl font-semibold text-gray-700">This wishlist is currently empty.</h2>
-          <p className="text-gray-500 mt-2">
+        <div className='text-center py-8'>
+          <h2 className='text-xl font-semibold text-gray-700'>This wishlist is currently empty.</h2>
+          <p className='text-gray-500 mt-2'>
             Explore our collection of properties and add your favorites to the wishlist.
           </p>
         </div>
@@ -93,7 +93,7 @@ const CustomArrow = ({ className, style, onClick, direction }: any) => (
     style={{ ...style }}
     onClick={onClick}
   >
-    <button className="bg-custom-dark-blue text-white p-2 rounded-full shadow-md focus:outline-none">
+    <button className='bg-custom-dark-blue text-white p-2 rounded-full shadow-md focus:outline-none'>
       {direction === 'left' ? <RiArrowLeftSLine fontSize={28} /> : <RiArrowRightSLine fontSize={28} />}
     </button>
   </div>

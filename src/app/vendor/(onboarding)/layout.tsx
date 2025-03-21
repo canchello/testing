@@ -3,15 +3,19 @@
 import type { ChildrenType } from '@/types'
 
 // Component Imports
-import AuthLayout from '@/layouts/AuthLayout'
 import { AppProgressBar } from 'next-nprogress-bar'
-import appStore from '@/stores/appStore'
 import { Suspense } from 'react'
 import VendorLayout from '@/layouts/VendorLayout'
+import userStore from '@/stores/userStore'
+import { redirect } from 'next/navigation'
+import { ROUTES } from '@/libs/constants'
 
 const Layout = ({ children }: ChildrenType) => {
-  const { messageModal }: any = appStore()
+  const { user }: any = userStore()
 
+  if (!user) {
+    redirect(ROUTES.VENDOR.LOGIN)
+  }
   return (
     <Suspense fallback={<></>}>
       <VendorLayout>{children}</VendorLayout>

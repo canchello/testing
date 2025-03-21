@@ -11,6 +11,7 @@ import Axios from '@/libs/axios'
 import { registerURL } from '@/services/APIs/user'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { useSearchParam } from 'react-use'
 
 interface FormData {
   email: string
@@ -21,7 +22,7 @@ interface FormData {
 
 const RegisterForm = () => {
   const router = useRouter()
-  const { setUser }: any = userStore()
+  const referralCode = useSearchParam('code')
   const [isLoading, setLoading] = useState(false)
 
   const {
@@ -39,16 +40,18 @@ const RegisterForm = () => {
   })
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_ENDPOINT}/authentication/google`
+    window.location.href = `${process.env.NEXT_PUBLIC_ENDPOINT}/authentication/google?referralBy=${referralCode}`
   }
 
   const onSubmit = async (data: FormData) => {
     try {
       setLoading(true)
-      const { data: res }: any = await Axios({ ...registerURL, data })
+      let payload: any = data
+      if (referralCode) payload.referralBy = referralCode
+      const { data: res }: any = await Axios({ ...registerURL, data: payload })
       if (res.status === 1) {
         toast.success(res.message || 'User Registered successfully')
-        router.push(`/verify-email?email=${data.email}&verify=${res.data.verificationToken}`)
+        router.push(`/verify-email?id=${res.data?._id || ''}`)
       }
     } catch (error) {
       console.error(error)

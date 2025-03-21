@@ -125,51 +125,51 @@ export default function Reviews() {
         </Link>
 
         {/* Main Content */}
-        <div className='flex flex-col justify-center items-center my-4 gap-4'>
-          <h1 className='text-3xl font-bold'>{!!reviews.length ? 'My Reviews' : 'No Reviews Yet!'}</h1>
-          <p className='text-lg text-center'>
-            {!!reviews.length
-              ? 'View and manage all your submitted reviews here. Keep track of your feedback on past stays and help other travelers with your insights!'
-              : 'You haven’t submitted any reviews yet. Share your experience after your next stay to help others make informed choices!'}
-          </p>
-
-          <div className='w-full m-4'>
-            {/* Loading Spinner */}
-            {loading && (
-              <div className='flex justify-center items-center'>
-                <Loader />
-              </div>
-            )}
-
-            {/* Reviews List */}
-            {!loading && !!reviews.length
-              ? reviews.map((review, index) => (
-                  <React.Fragment key={index}>
-                    <ReviewCard
-                      image={review.image}
-                      title={review.title}
-                      location={review.location}
-                      review={review.review}
-                      rating={review.rating}
-                      description={review.description}
-                      reviewedOn={review.reviewedOn}
-                      onEdit={() => {
-                        setCurrentReview(review)
-                        setShowModal(true)
-                      }}
-                      onDelete={() => handleReviewDelete(review.id)}
-                    />
-                    <div className='divider' />
-                  </React.Fragment>
-                ))
-              : // No Reviews Placeholder
-                !loading && (
-                  <div className='flex w-full justify-center'>
-                    <Image src={NoReviews} alt='No Reviews' />
-                  </div>
-                )}
+        {/* Loading Spinner */}
+        {loading ? (
+          <div className='flex justify-center items-center my-8'>
+            <Loader />
           </div>
-        </div>
+        ) : (
+          <div className='flex flex-col justify-center items-center my-4 gap-4'>
+            <h1 className='text-3xl font-bold'>{!!reviews.length ? 'My Reviews' : 'No Reviews Yet!'}</h1>
+            <p className='text-lg text-center'>
+              {!!reviews.length
+                ? 'View and manage all your submitted reviews here. Keep track of your feedback on past stays and help other travelers with your insights!'
+                : 'You haven’t submitted any reviews yet. Share your experience after your next stay to help others make informed choices!'}
+            </p>
+
+            <div className='w-full m-4'>
+              {/* Reviews List */}
+              {!loading && !!reviews.length
+                ? reviews.map((review, index) => (
+                    <React.Fragment key={index}>
+                      <ReviewCard
+                        image={review.image}
+                        title={review.title}
+                        location={review.location}
+                        review={review.review}
+                        rating={review.rating}
+                        description={review.description}
+                        reviewedOn={review.reviewedOn}
+                        onEdit={() => {
+                          setCurrentReview(review)
+                          setShowModal(true)
+                        }}
+                        onDelete={() => handleReviewDelete(review.id)}
+                      />
+                      <div className='divider' />
+                    </React.Fragment>
+                  ))
+                : // No Reviews Placeholder
+                  !loading && (
+                    <div className='flex w-full justify-center'>
+                      <Image src={NoReviews} alt='No Reviews' />
+                    </div>
+                  )}
+            </div>
+          </div>
+        )}
 
         {/* Review Modal */}
         {showModal && (

@@ -4,9 +4,10 @@ import React from 'react'
 
 interface DigitalCouponProps {
   variant: 'red' | 'yellow' | 'green' // Variants for background color
-  couponCode: string // Coupon code
+  discountType?: string // Coupon code
+  code: string // Coupon code
   title: string // Title of the coupon
-  subtitle: string // Additional subtitle or info
+  subtitle?: string // Additional subtitle or info
   discount: string
   isActive: boolean
 }
@@ -34,7 +35,8 @@ const variantBorder = {
 
 const DigitalCoupon: React.FC<DigitalCouponProps> = ({
   variant = 'red',
-  couponCode = '',
+  discountType = '',
+  code = '',
   title = '',
   subtitle = '',
   discount = '',
@@ -95,15 +97,16 @@ const DigitalCoupon: React.FC<DigitalCouponProps> = ({
         <div className='transform -rotate-90 whitespace-nowrap ml-3 text-center space-y-2'>
           <p className='text-xs font-semibold uppercase'>Coupon</p>
           <h2 className={`text-4xl font-semibold custom-font ${textStyles[isActive ? variant : 'inactive']}`}>
-            {discount}
+            {discountType === 'flat_amount_off' && `Rs.${discount}`}
+            {discountType === 'percentage_off' && `${discount}%`}
           </h2>
         </div>
       </div>
 
       {/* Center Section */}
       <div className='flex-grow flex flex-col items-center w-[70%] justify-around p-4 text-center'>
-        <div className='font-medium leading-5'>{title}</div>
-        <div className='text-3xl font-bold leading-8'>{couponCode}</div>
+        <div className='font-medium leading-5 uppercase'>{title}</div>
+        <div className='text-3xl font-bold leading-8 uppercase'>{code}</div>
         <div className='font-normal leading-5'>{subtitle}</div>
       </div>
     </div>

@@ -80,7 +80,7 @@ const OverallRating = () => {
           ))}
         </div>
       </div>
-    </div >
+    </div>
   );
 };
 

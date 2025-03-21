@@ -2,11 +2,22 @@
 import React from 'react'
 import Link from 'next/link'
 import CustomButton from '@/components/common/CustomButton'
+import Axios from '@/libs/axios'
+import { forgotPasswordURL } from '@/services/APIs/user'
+import { toast } from 'sonner'
 
-const EmailSentForm = () => {
-  const onSubmit = () => {
-    // console.log(data)
-    // toast.error("Please fill all necessary fields!");
+const EmailSentForm = ({ email }: any) => {
+  const [loading, setLoading] = React.useState(false)
+  const onSubmit = async () => {
+    try {
+      setLoading(true)
+      const { data }: any = await Axios({ ...forgotPasswordURL, data: { email } })
+      toast.success(data.message)
+    } catch (error) {
+      console.log('error', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -22,7 +33,13 @@ const EmailSentForm = () => {
 
           <div className='flex flex-col gap-4 w-full'>
             {/* Submit Button */}
-            <CustomButton variant='secondary' title='Resend Email' type='submit' className='w-full' />
+            <CustomButton
+              variant='secondary'
+              isLoading={loading}
+              title='Resend Email'
+              onClick={onSubmit}
+              className='w-full'
+            />
           </div>
 
           {/* Login Link */}

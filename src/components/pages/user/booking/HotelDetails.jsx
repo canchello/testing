@@ -55,8 +55,8 @@ export default function HotelDetails({
       }
     }
     try {
-      const response = await Axios({ ...wishlistListingURL, data: payload })
-      setUserWishList(response.data.data.data)
+      const { data } = await Axios({ ...wishlistListingURL, data: payload })
+      setUserWishList(data.data?.data || [])
     } catch (error) {
       console.error('Error fetching wishlist:', error)
     } finally {

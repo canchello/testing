@@ -7,8 +7,8 @@ import { getHotelListURL } from '@/services/APIs/hotel'
 const initialValues = {
   hotelFilters: {},
   hotelList: [],
-  selectedRooms:[],
-  selectedHotel:{}
+  selectedRooms: [],
+  selectedHotel: {},
 }
 
 const hotelStore = create()(
@@ -21,7 +21,7 @@ const hotelStore = create()(
           set({ loadinghotels: true })
           const { data }: any = await Axios({
             ...getHotelListURL,
-            data: payload
+            data: payload,
           })
           set({ hotelList: data?.data?.data || [] })
         } catch (error) {
@@ -30,12 +30,13 @@ const hotelStore = create()(
           set({ loadinghotels: false })
         }
       },
-      setSelectedRooms:(data:any)=> set({selectedRooms:data}),
-      setselectedHotel:(data:any)=>set({selectedHotel:data})
+      setSelectedRooms: (data: any) => set({ selectedRooms: data }),
+      setSelectedHotel: (data: any) => set({ selectedHotel: data }),
+      resetState: () => set({ ...initialValues }), // Reset state to initial values
     }),
     {
       name: 'hotel-store', // name of the item in the storage (must be unique)
-      storage: createJSONStorage(() => localStorage) // (optional) by default, 'localStorage' is used
+      storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
     }
   )
 )

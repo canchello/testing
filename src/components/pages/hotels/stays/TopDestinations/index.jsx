@@ -13,7 +13,7 @@ export default function ExploreTopDestinations() {
         coastal retreat, here are the top locations our travelers love:
       </p>
       {/* <div className='grid grid-row-2 grid-col-3 gap-4'> */}
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
         {images.map((image, index) => (
           <div key={index} className={cn(`relative ${image.span}`)}>

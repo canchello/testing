@@ -15,6 +15,26 @@
   }
 } */
 
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* Hide number input arrows */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
@@ -51,11 +71,11 @@ input[type='number'] {
   --tw-text-opacity: 1; */
   color: var(--fallback-pc, oklch(var(--pc) / var(--tw-text-opacity)));
 }
-.invert-0{
+.invert-0 {
   filter: invert(0);
 }
 
-.invert-1{
+.invert-1 {
   filter: invert(1);
 }
 

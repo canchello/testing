@@ -1,13 +1,13 @@
 'use client'
 import React from 'react'
-import userStore from '@/stores/userStore'
 import Link from 'next/link'
-import { countries } from '@/libs/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import hotelStore from '@/stores/hotelStore'
+import appStore from '@/stores/appStore'
 
 const BookingForm: React.FC = () => {
+  const { cities = [] }: any = appStore()
   const { hotelFilters, setHotelFilters }: any = hotelStore()
 
   return (
@@ -23,9 +23,9 @@ const BookingForm: React.FC = () => {
           <option value='' disabled className='text-gray-500'>
             Select Location
           </option>
-          {Object.keys(countries).map(item => (
-            <option key={item} value={countries[item]} className='text-black'>
-              {countries[item]}
+          {cities.map((item: any) => (
+            <option key={item} value={item} className='text-black capitalize'>
+              {item}
             </option>
           ))}
         </select>

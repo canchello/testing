@@ -5,27 +5,15 @@ import TextInput from '@/components/form/LabelInput'
 import CustomTextArea from '@/components/form/TextareaInput'
 import Rating from '@/components/UI/Rating'
 
-interface EditableReview {
-  rating: number
-  review: string
-  description: string
-}
-
-interface ReviewModalProps {
-  review: EditableReview
-  onSave: any // Callback to save changes
-  onClose: () => void // Callback to close the modal
-}
-
-const ReviewModal: React.FC<ReviewModalProps> = ({ review, onSave, onClose }) => {
+const ReviewModal = ({ review, onSave, onClose }) => {
   const {
     control,
     handleSubmit,
     formState: { errors },
     setValue
-  } = useForm<EditableReview>({
+  } = useForm({
     defaultValues: {
-      review: review.review || '',
+      title: review.title || '',
       description: review.description || '',
       rating: review.rating || 0
     }
@@ -33,12 +21,12 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ review, onSave, onClose }) =>
 
   // Pre-fill form values
   React.useEffect(() => {
-    setValue('review', review.review)
+    setValue('title', review.title)
     setValue('description', review.description)
     setValue('rating', review.rating)
   }, [review, setValue])
 
-  const onSubmit = (data: EditableReview) => {
+  const onSubmit = (data) => {
     onSave({ ...review, ...data }) // Pass updated data to parent
     onClose() // Close modal
   }
@@ -60,7 +48,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ review, onSave, onClose }) =>
       </div>
       <form className='flex flex-col gap-4' onSubmit={handleSubmit(onSubmit)}>
         <Controller
-          name='review'
+          name='title'
           control={control}
           rules={{ required: 'Review title is required' }}
           render={({ field }) => (
@@ -68,7 +56,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ review, onSave, onClose }) =>
               {...field}
               label='Review Title'
               placeholder='Enter review title'
-              error={errors.review?.message}
+              error={errors.title?.message}
               required
             />
           )}

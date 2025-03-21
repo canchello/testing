@@ -9,6 +9,9 @@ import { getHotelListURL } from '@/services/APIs/hotel'
 import { ROUTES } from '@/libs/constants'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+const MapComp = dynamic(() => import("@/components/common/Map/index.jsx"), { ssr: false });
 
 const TopHotelsAndLocation = ({ title = '', description = '' }) => {
   const router = useRouter()
@@ -58,13 +61,14 @@ const TopHotelsAndLocation = ({ title = '', description = '' }) => {
 
         {/* Map Image Section */}
         <div className='relative w-full h-full my-4'>
-          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d53609.17595954849!2d13.147135859146331!3d32.883002227396815!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x13a892c4c11c43d9%3A0x8d99d8947b5cec86!2sTripoli%2C%20Libya!5e0!3m2!1sen!2sin!4v1734160114064!5m2!1sen!2sin"
+          <MapComp />
+          {/* <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d53609.17595954849!2d13.147135859146331!3d32.883002227396815!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x13a892c4c11c43d9%3A0x8d99d8947b5cec86!2sTripoli%2C%20Libya!5e0!3m2!1sen!2sin!4v1734160114064!5m2!1sen!2sin"
             style={{
               width: "100%",
               height: "250px",
               border: 0,
             }}
-            allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe> */}
           {/* <Img
             src={'https://res.cloudinary.com/dndsypilw/image/upload/v1730370276/xt9okzqdo9uzgnij5dwz.png'}
             alt={'mapImage'}

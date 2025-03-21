@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import CustomButton from '@/components/common/CustomButton'
 import userStore from '@/stores/userStore'
@@ -26,6 +26,9 @@ import PhoneInput from '@/components/form/PhoneInput'
 import dayjs from 'dayjs'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUser } from '@fortawesome/free-solid-svg-icons'
+import { resendOTPURL, verifyOTP_URL } from '@/services/APIs/user'
+import { sendOTPURL } from '@/services/APIs/vendor'
+import OTPInput from '@/components/form/OtpInput'
 
 interface FormData {
   personalDetails: {
@@ -56,19 +59,30 @@ interface PassportDetailsProps {
   lastName: string
 }
 
+const defaultTimer = 120 // 2 Minute
+
 const PersonalDetails = () => {
-  const { user, setUser }: any = userStore()
+  const { user, setUser, updateUserProfile: fetchUpdatedUser }: any = userStore()
   const [loading, setLoading] = useState<Boolean>(false)
   const [formLoading, setFormLoading] = useState<Boolean>(false)
   const [passportDetails, setPassportDetails] = useState<PassportDetailsProps | null>(null)
   const [photoUpdated, setPhotoUpdated] = useState<Boolean>(false)
+
+  const [verifyLoading, setVerifyLoading] = useState<Boolean>(false)
+  const [verifyNumber, setVerifyNumber] = useState<Boolean>(false)
+  const [otp, setOTP] = useState('')
+
+  const [resendLoading, setResendLoading] = useState(false)
+  const [isResendDisabled, setIsResendDisabled] = useState(true)
+  const [timer, setTimer] = useState(defaultTimer)
 
   const {
     control,
     handleSubmit,
     formState: { errors, isDirty, dirtyFields },
     reset, // To reset the form with updated values
-    getValues
+    getValues,
+    setFocus
   } = useForm<FormData>({
     defaultValues: {
       personalDetails: {
@@ -82,7 +96,7 @@ const PersonalDetails = () => {
         address: user?.address || ''
       },
       passportDetails: {
-        issuingCountry: '',
+        issuingCountry: 'india',
         passportNumber: '',
         expiryDate: '',
         agreedPolicy: false,
@@ -116,12 +130,68 @@ const PersonalDetails = () => {
   const addorUpdateUserPassportDetails = async (data: any) => {
     try {
       const apiURL = passportDetails ? updateUserPassportDetailsURL : addUserPassportDataURL
-      console.log('apiURL', apiURL)
       const { data: res }: any = await Axios({ ...apiURL, data })
       if (res) {
         toast.success('Passport details Saved!')
       }
-      console.log('data', data)
+    } catch (error) {
+      console.log('error', error)
+    }
+  }
+
+  const onChangeNumber = () => {
+    setVerifyNumber(false)
+    setFocus('personalDetails.phoneNumber')
+  }
+
+  // Countdown Timer Effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (isResendDisabled && timer > 0) {
+      interval = setInterval(() => {
+        setTimer(prev => prev - 1)
+      }, 1000)
+    } else {
+      setIsResendDisabled(false) // Enable resend button when timer reaches 0
+    }
+
+    return () => clearInterval(interval) // Cleanup on unmount
+  }, [isResendDisabled, timer])
+
+  const onVerifyNumber = async () => {
+    setVerifyLoading(true)
+    try {
+      const { data }: any = await Axios({
+        ...verifyOTP_URL,
+        data: {
+          userId: user._id,
+          type: 'phoneNumber',
+          otp: otp
+        }
+      })
+      toast.success(data.message)
+      setVerifyNumber(false)
+      fetchUpdatedUser()
+    } catch (error) {
+      console.log('error', error)
+    } finally {
+      setVerifyLoading(false)
+    }
+  }
+
+  const sendNumberOTP = async () => {
+    try {
+      const { data }: any = await Axios({
+        ...sendOTPURL,
+        data: {
+          userId: user._id,
+          type: 'phoneNumber'
+        }
+      })
+      toast.success(data.message)
+      setVerifyNumber(true)
+      setTimer(defaultTimer)
+      setIsResendDisabled(true)
     } catch (error) {
       console.log('error', error)
     }
@@ -149,6 +219,7 @@ const PersonalDetails = () => {
       if (Object.keys(updatedPassportDetailsFields).length > 0) {
         await addorUpdateUserPassportDetails(updatedPassportDetailsFields)
       }
+      !user.isNumberVerified && sendNumberOTP()
       setFormLoading(false)
     } catch (error) {
       console.log('error', error)
@@ -198,11 +269,21 @@ const PersonalDetails = () => {
     }
   }, [passportDetails, user, reset])
 
-  console.log('user', user)
+  const onResendOTP = async () => {
+    try {
+      if (resendLoading) return
+      setResendLoading(true)
+      const { data }: any = await Axios({ ...resendOTPURL, data: { userId: user._id, type: 'phoneNumber' } })
+      toast.success(data.message || 'OTP has been resend successfully!')
+      setTimer(defaultTimer)
+      setIsResendDisabled(true)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setResendLoading(false)
+    }
+  }
 
-  // if () {
-  //   return <Loader />
-  // }
   return (
     <div className='container mx-auto'>
       <h2 className='text-2xl font-bold mb-2'>
@@ -300,6 +381,7 @@ const PersonalDetails = () => {
             render={({ field }) => (
               <PhoneInput
                 {...field}
+                ref={field.ref}
                 label='Contact - Number'
                 placeholder='Enter Number'
                 error={errors.personalDetails?.phoneNumber?.message}
@@ -318,6 +400,7 @@ const PersonalDetails = () => {
                 placeholder='Enter Date of Birth'
                 error={errors?.personalDetails?.dob?.message}
                 required
+                disableFuture={true} // This disables future dates
               />
             )}
           />
@@ -400,6 +483,39 @@ const PersonalDetails = () => {
           />
         </div>
       </form>
+      {verifyNumber && (
+        <div className='container mx-auto bg-white pt-8 rounded-lg'>
+          <h2 className='text-2xl font-bold mb-2'>Verify Phone Number</h2>
+          <p className='mb-6 text-lg'>
+            Please enter the One Time Password (OTP) that has been sent to the phone no.{' '}
+            {getValues('personalDetails.phoneNumber')}
+          </p>
+          <div className='flex justify-between flex-wrap items-center gap-2'>
+            <div>
+              <OTPInput onComplete={otp => setOTP(otp)} />
+              <p className='text-base mt-2 text-center'>
+                Didn’t receive the OTP?{' '}
+                <span
+                  className={`font-bold text-primary cursor-pointer ${isResendDisabled ? 'opacity-50' : ''}`}
+                  onClick={!resendLoading && !isResendDisabled ? onResendOTP : undefined}
+                >
+                  {resendLoading ? 'Loading...' : 'Resend OTP'}
+                  {isResendDisabled && ` in ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`}
+                </span>
+              </p>
+            </div>
+            <div className='flex items-center gap-2'>
+              <CustomButton title='Change Number' variant='default' onClick={onChangeNumber} />
+              <CustomButton
+                title='Verify Number'
+                isLoading={!!verifyLoading}
+                isDisabled={!!verifyLoading}
+                onClick={onVerifyNumber}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

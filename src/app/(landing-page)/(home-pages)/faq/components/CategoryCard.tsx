@@ -69,8 +69,7 @@ const FAQ: React.FC = () => {
         }
       }
       const { data }: any = await Axios({ ...fetchFaqListURL, data: payload })
-      console.log(data)
-      setFaqList(data.data.data)
+      setFaqList(data.data?.data || [])
       setIsLoading(false)
     } catch (error) {
       console.log(error)
